@@ -1,0 +1,4 @@
+Django
+django-pandas
+openpyxl
+pandas
