@@ -1,3 +1,53 @@
 from django.db import models
 
 # Create your models here.
+from django.db import models
+
+
+class Document(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Section(models.Model):
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="sections")
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.document.name} - {self.name}"
+
+
+class Subsection(models.Model):
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="subsections")
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.section.name} - {self.name}"
+
+
+class Writer(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Task(models.Model):
+    COLOR_CHOICES = [
+        ("green", "Green - Ready for QA"),
+        ("yellow", "Yellow - In Progress"),
+        ("grey", "Grey - Not Needed"),
+        ("white", "White - No Changes"),
+        ("orange", "Orange - Pushed to Next Release"),
+    ]
+
+    subsection = models.ForeignKey(Subsection, on_delete=models.CASCADE, related_name="tasks")
+    writer = models.ForeignKey(Writer, on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
+    comments = models.TextField(blank=True, null=True)
+    sme = models.CharField(max_length=255, verbose_name="Subject Matter Expert / Engineering", blank=True, null=True)
+    color = models.CharField(max_length=20, choices=COLOR_CHOICES, default="white")
+
+    def __str__(self):
+        return f"Task: {self.subsection.name} ({self.writer.name if self.writer else 'Unassigned'})"
