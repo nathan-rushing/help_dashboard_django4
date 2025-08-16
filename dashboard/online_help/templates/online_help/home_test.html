@@ -1,8 +1,45 @@
 {% extends 'online_help/base.html' %}
 {% block content %}
-{% load static custom_filters %}
+{% load static %}
 
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
-<h1>Hello</h1>
+<h1>All Tasks</h1>
+<table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Document</th>
+            <th>Section</th>
+            <th>Subsection</th>
+            <th>Writer</th>
+            <th>SME</th>
+            <th>Comments</th>
+            <th>Color</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td>{{ task.subsection.section.document.name }}</td>
+            <td>{{ task.subsection.section.name }}</td>
+            <td>{{ task.subsection.name }}</td>
+            <td>
+                {% if task.writer %}
+                    {{ task.writer.name }}
+                {% else %}
+                    Unassigned
+                {% endif %}
+            </td>
+
+            <td>{{ task.sme }}</td>
+            <td>{{ task.comments }}</td>
+            <td>{{ task.color }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No tasks available.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 {% endblock %}

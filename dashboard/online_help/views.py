@@ -14,6 +14,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.http import require_POST
 from django.db.models import Prefetch, F, Value, CharField
 from django.db.models.functions import Coalesce
+from .models import Task, Subsection, Section, Document, Writer
+
 
 from .models import (
     Document, Section, Subsection, Writer, Task
@@ -22,9 +24,7 @@ from .models import (
 
 # )
 
+
 def home_test(request):
-    ctx = {
-        'title': 'Online Help Home',
-        'message': 'Welcome to the Online Help Dashboard!'
-    }
-    return render(request, 'online_help/home_test.html', ctx)
+    tasks = Task.objects.select_related("subsection__section__document", "writer").all()
+    return render(request, "online_help/home_test.html", {"tasks": tasks})
