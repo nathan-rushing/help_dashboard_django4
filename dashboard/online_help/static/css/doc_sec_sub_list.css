@@ -1,0 +1,23 @@
+.scroll-box {
+    max-height: 300px; /* Adjust as needed */
+    overflow-y: auto;
+}
+
+
+.hover-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.hover-link:hover {
+    color: blue;
+    text-decoration: underline;
+}
+
+#searchInput {
+    margin-bottom: 15px;
+    padding: 8px;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}

@@ -1,49 +1,157 @@
-{% extends 'online_help/base.html' %}
-{% block content %}
+{% extends "online_help/base.html" %}
 {% load static %}
 
-<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/cssin.css">
 
 <!-- Breadcrumbs -->
 <p>
-    <a href="{% url 'online_help:tasks_test' %}"> All Tasks </a>
+    <a href="{% url 'online_help:tasks_test' %}" class="hover-link"> All Tasks </a>
     ›
-    <a href="{% url 'online_help:document_list' %}">Radiant Documentation</a>
+    <a href="{% url 'online_help:document_list' %}" class="hover-link">Radiant Documentation</a>
     ›
-    <a href="{% url 'online_help:document_sections' subsection.section.document.id %}">{{ subsection.section.document.name }}</a>
+    <a href="{% url 'online_help:document_sections' subsection.section.document.id %}" class="hover-link">{{ subsection.section.document.name }}</a>
     ›
-    <a href="{% url 'online_help:section_subsections' subsection.section.id %}">{{ subsection.section.name }}</a>
+    <a href="{% url 'online_help:section_subsections' subsection.section.id %}" class="hover-link">{{ subsection.section.name }}</a>
     ›
-    <a href="{% url 'online_help:section_subsections' subsection.id %}">{{ subsection.name }}</a>
+    <a href="{% url 'online_help:section_subsections' subsection.id %}" class="hover-link">{{ subsection.name }}</a>
     ›
 </p>
-    <h1>Subsection: {{ subsection.name }}</h1>
 
-    {% if tasks %}
-        {% for task in tasks %}
-            <div style="border:1px solid #000; margin:10px; padding:10px;">
-                <div>
-                    <strong>Writer:</strong>
-                    {% if task.writer %}
-                        {{ task.writer.name }}
-                    {% else %}
-                        Unassigned
-                    {% endif %}
-                </div>
+<p><a href="{% url 'online_help:section_subsections' subsection.section.id %}">← Back to {{ subsection.section.name }} Subsections</a></p>
 
-                <div>
-                    <strong>SME:</strong>
-                    {% if task.sme %}
-                        {{ task.sme }}
-                    {% else %}
-                        Not assigned
-                    {% endif %}
-                </div>
+
+
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">{{ subsection.section.document.name }} — {{ subsection.section.name }} — {{ subsection.name }}</h4>
+            <button class="btn btn-outline-dark btn-sm" onclick="showAddForm()">Add Writer</button>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <h5 class="text-muted">Writers</h5>
+                {% if tasks %}
+                    {% for task in tasks %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <p class="mb-0"><strong>{{ task.writer.name }}</strong></p>
+                            <a href="?remove_writer={{ task.writer.name }}" class="btn btn-sm btn-danger"
+                               onclick="return confirm('Are you sure you want to remove {{ task.writer.name }}?')">
+                               Remove
+                            </a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No writers found for this subsection.</p>
+                {% endif %}
             </div>
-        {% endfor %}
-    {% else %}
-        <p>No tasks available for this subsection.</p>
-    {% endif %}
+        </div>
+    </div>
 
-    <p><a href="{% url 'online_help:section_subsections' subsection.section.id %}">⬅ Back to {{ subsection.section.name }} Subsections</a></p>
+    
+    <br>
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Subject Matter Expert (SME)</h5>
+            <!-- <button class="btn btn-outline-dark btn-sm" onclick="showAddSME()">Add SME</button> -->
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <h5 class="text-muted">Experts</h5>
+                {% if tasks %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="mb-0" id="sme-display"><strong>{{ tasks.sme.name }}</strong></p>
+                        
+                        <form method="post" id="edit-sme-form" class="form-inline" style="display: none;">
+                            {% csrf_token %}
+                            <input type="hidden" name="edit_sme_form" value="1">
+                            <input type="text" name="sme" class="form-control form-control-sm mr-2" value="{{ tasks.sme.name }}" required>
+                            <button type="submit" class="btn btn-sm btn-success">Save</button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEdit()">Cancel</button>
+                        </form>
+
+                        <div id="sme-buttons">
+                            <!-- <a href="?remove_writer={{ sme }}" class="btn btn-sm btn-danger"
+                            onclick="return confirm('Are you sure you want to remove {{ sme }}?')">
+                                Remove
+                            </a> -->
+                            <button class="btn btn-sm btn-primary ml-2" onclick="editSME()">Edit</button>
+                        </div>
+                    </div>
+
+                {% else %}
+                    <p class="text-muted">No SME assigned for this task.</p>
+                {% endif %}
+            </div>
+        </div>
+
+
+    </div>
+
+    <div class="container mt-5">
+        <div id="add-doc-form" class="add-form mt-3" style="display: none;">
+            <h3>Add Writer</h3>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ form.writer.label_tag }}
+                    {{ form.writer }}
+                </div>
+                <button type="submit" class="btn btn-outline-dark btn-sm">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container mt-5">
+        <div id="add-doc-form2" class="add-form mt-3" style="display: none;">
+            <h3>Add SME</h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="sme_form" value="1">  <!-- To distinguish this form -->
+                <div class="form-group">
+                    {{ sme_form.sme.label_tag }}
+                    {{ sme_form.sme }}
+                </div>
+                <button type="submit" class="btn btn-outline-dark btn-sm">Submit</button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function confirmRemoval(writerName) {
+    if (confirm(`Are you sure you want to remove ${writerName}?`)) {
+        alert(`${writerName} would be removed (if backend was connected).`);
+    }
+}
+
+function showAddForm() {
+    const form = document.getElementById('add-doc-form');
+    form.style.display = 'block';
+    form.scrollIntoView({ behavior: 'smooth' });
+}
+
+function showAddSME() {
+    const form = document.getElementById('add-doc-form2');
+    form.style.display = 'block';
+    form.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+<script>
+function editSME() {
+    document.getElementById('sme-display').style.display = 'none';
+    document.getElementById('sme-buttons').style.display = 'none';
+    document.getElementById('edit-sme-form').style.display = 'flex';
+}
+
+function cancelEdit() {
+    document.getElementById('edit-sme-form').style.display = 'none';
+    document.getElementById('sme-display').style.display = 'block';
+    document.getElementById('sme-buttons').style.display = 'block';
+}
+</script>
+
 {% endblock %}

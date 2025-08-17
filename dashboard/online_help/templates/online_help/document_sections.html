@@ -1,36 +1,45 @@
-{% extends 'online_help/base.html' %}
+{% extends "online_help/base.html" %}
 {% block content %}
 {% load static %}
 
-<link rel="stylesheet" href="{% static 'css/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
 <!-- Breadcrumbs -->
 <p>
-    <a href="{% url 'online_help:tasks_test' %}"> All Tasks </a>
+    <a href="{% url 'online_help:tasks_test' %}" class="hover-link"> All Tasks </a>
     ›
-    <a href="{% url 'online_help:document_list' %}">Radiant Documentation</a>
+    <a href="{% url 'online_help:document_list' %}" class="hover-link">Radiant Documentation</a>
     ›
-    <a href="{% url 'online_help:document_sections' document.id %}">{{ document.name }}</a>
+    <a href="{% url 'online_help:document_sections' document.id %}" class="hover-link">{{ document.name }}</a>
     ›
 </p>
 
-<h1>Sections for "{{ document.name }}"</h1>
+<p><a href="{% url 'online_help:document_list' %}">← Back to {{ document.section.document.name }} Documents</a></p>
 
-<ul>
-    {% for section in sections %}
-        <li>
-            <a href="{% url 'online_help:section_subsections' section.id %}">
-                {{ section.name }}
-            </a>
-        </li>
-    {% empty %}
-        <li>No sections found for this document.</li>
-    {% endfor %}
-</ul>
 
-<p><a href="{% url 'online_help:document_list' %}">⬅ Back to {{ document.section.document.name }} Documents</a></p>
-
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">{{ document.name }}</h2>
+            <a href="" class="btn btn-outline-dark btn-sm">Edit</a>
+        </div>
+        <div class="card-body">
+            {% if sections %}
+                <div class="mb-3">
+                    {% for section in sections %}
+                        <h5 class="text-muted">
+                            <a href="{% url 'online_help:section_subsections' section.id %}" class="hover-link">{{ section.name }}</a>
+                        </h5>
+                    {% empty %}
+                        <li>No sections found for this document.</li>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>No sections found for this document.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
 {% endblock %}
-
-

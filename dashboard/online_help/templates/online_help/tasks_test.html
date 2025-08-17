@@ -2,16 +2,18 @@
 {% block content %}
 {% load static %}
 
-<link rel="stylesheet" href="{% static 'css/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
 
 <!-- Radiant Documentation (breadcrumb root) -->
-<h2>
-    <a href="{% url 'online_help:document_list' %}">Radiant Documentation</a>
-</h2>
+<p>
+    <a href="{% url 'online_help:document_list' %}" class="btn text-white" style="background-color: #0747a6;">Radiant Documentation</a>
+</p>
 
 <!-- Breadcrumbs -->
 <p>
-    <a href="{% url 'online_help:tasks_test' %}"> All Tasks </a>
+    <a href="{% url 'online_help:tasks_test' %}" class="hover-link"> All Tasks </a>
     ›
 </p>
 

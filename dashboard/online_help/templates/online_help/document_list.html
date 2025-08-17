@@ -1,29 +1,67 @@
-{% extends 'online_help/base.html' %}
+
+
+{% extends "online_help/base.html" %}
 {% block content %}
 {% load static %}
 
-<link rel="stylesheet" href="{% static 'css/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Breadcrumbs -->
-    <p>
-        <a href="{% url 'online_help:tasks_test' %}"> All Tasks </a>
-        ›
-        <a href="{% url 'online_help:document_list' %}">Radiant Documentation</a>
-        ›
-    </p>
+<!-- Breadcrumbs -->
+<p>
+    <a href="{% url 'online_help:tasks_test' %}" class="hover-link"> All Tasks </a>
+    ›
+    <a href="{% url 'online_help:document_list' %}" class="hover-link">Radiant Documentation</a>
+</p>
 
-    <h1>All Documents</h1>
-    <ul>
-        {% for doc in documents %}
-            <li>
-                <a href="{% url 'online_help:document_sections' doc.id %}">{{ doc.name }}</a>
-            </li>
-        {% empty %}
-            <li>No documents found.</li>
-        {% endfor %}
-    </ul>
+<p><a href="{% url 'online_help:tasks_test' %}">← Back to Tasks</a></p>
 
-    <p><a href="{% url 'online_help:tasks_test' %}">⬅ Back to all tasks</a></p>
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Radiant Documentation</h2>
+                <a href="" class="btn btn-outline-dark btn-sm">Edit</a>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <!-- create a loop here -->
+                {% for doc in documents %}
+                    <h5 class="text-muted">
+                        <a href="{% url 'online_help:document_sections' doc.id %}" class="hover-link">{{ doc.name }}</a>
+                    </h5>
+                {% empty %}
+                    <p>No documents found.</p>
+                {% endfor %}
 
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterContent() {
+    const input = document.getElementById("searchInput").value.toLowerCase();
+    const headings = document.querySelectorAll(".scroll-box h5, .scroll-box p");
+    const tables = document.querySelectorAll("table");
+
+    headings.forEach((heading, index) => {
+        const table = tables[index];
+        const rows = table.querySelectorAll("tbody tr");
+        let tableHasMatch = false;
+
+        const headingMatch = heading.innerText.toLowerCase().includes(input);
+
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            const match = text.includes(input);
+            row.style.display = match ? "" : "none";
+            if (match) tableHasMatch = true;
+        });
+
+        heading.style.display = headingMatch || tableHasMatch ? "" : "none";
+        table.style.display = tableHasMatch ? "" : "none";
+    });
+}
+</script>
 
 {% endblock %}
