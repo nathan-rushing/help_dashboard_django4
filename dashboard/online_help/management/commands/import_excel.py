@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from online_help.models import Document, Section, Subsection, Writer, Task
+from online_help.models import Document, Section, Subsection, Writer, Task, SME
 
 
 class Command(BaseCommand):
@@ -24,7 +24,11 @@ class Command(BaseCommand):
             sub_name = str(row.get("Sub-sections")).strip()
             writer_name = str(row.get("Writer")).strip()
             comments = row.get("Comments")
-            sme = row.get("Subject Matter Expert/Engineering")
+            sme_name = str(row.get("Subject Matter Expert/Engineering")).strip() if pd.notna(row.get("Subject Matter Expert/Engineering")) else None
+            sme = None
+            if sme_name:
+                sme, _ = SME.objects.get_or_create(name=sme_name)
+
             color = str(row.get("color")).lower().strip() if row.get("color") else "white"
 
             if not doc_name or not sec_name or not sub_name:
@@ -41,12 +45,13 @@ class Command(BaseCommand):
             task, created = Task.objects.get_or_create(
                 subsection=subsection,
                 writer=writer,
+                sme=sme,   # ✅ now foreign key
                 defaults={
                     "comments": comments if pd.notna(comments) else "",
-                    "sme": sme if pd.notna(sme) else "",
                     "color": color,
                 },
             )
+
             if created:
                 imported_count += 1
 

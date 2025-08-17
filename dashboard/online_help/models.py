@@ -33,6 +33,8 @@ class Writer(models.Model):
     def __str__(self):
         return self.name
 
+class SME(models.Model):
+    name = models.CharField(max_length=255, unique=True)
 
 class Task(models.Model):
     COLOR_CHOICES = [
@@ -42,11 +44,10 @@ class Task(models.Model):
         ("white", "White - No Changes"),
         ("orange", "Orange - Pushed to Next Release"),
     ]
-
     subsection = models.ForeignKey(Subsection, on_delete=models.CASCADE, related_name="tasks")
     writer = models.ForeignKey(Writer, on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
+    sme = models.ForeignKey("SME", on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
     comments = models.TextField(blank=True, null=True)
-    sme = models.CharField(max_length=255, verbose_name="Subject Matter Expert / Engineering", blank=True, null=True)
     color = models.CharField(max_length=20, choices=COLOR_CHOICES, default="white")
 
     def __str__(self):

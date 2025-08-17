@@ -5,89 +5,119 @@
 <link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
 <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 
-
-<!-- Radiant Documentation (breadcrumb root) -->
-<p>
-    <a href="{% url 'online_help:document_list' %}" class="btn text-white" style="background-color: #0747a6;">Radiant Documentation</a>
-</p>
-
 <!-- Breadcrumbs -->
 <p>
     <a href="{% url 'online_help:tasks_test' %}" class="hover-link"> All Tasks </a>
     ›
 </p>
 
-<h1>All Tasks</h1>
-<table border="1">
-    <thead>
-        <tr>
-            <th>Document</th>
-            <th>Section</th>
-            <th>Subsection</th>
-            <th>Writer</th>
-            <th>SME</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for task in tasks %}
-            <tr>
-                <!-- Document -->
-                <td>
-                    {% if task.subsection.section.document %}
-                        <a href="{% url 'online_help:document_sections' task.subsection.section.document.id %}">
-                            {{ task.subsection.section.document.name }}
-                        </a>
-                    {% else %}
-                        No document
-                    {% endif %}
-                </td>
+<div class="container mt-4">
+    <div class="p-3 d-flex justify-content-between align-items-start gap-3" style="position: sticky; top: 30px; z-index: 1000;">
+        <input type="text" id="searchInput" class="form-control w-75" placeholder="Search sections or subsections..." onkeyup="filterContent()">
+        <a href="{% url 'online_help:document_list' %}" class="btn text-white" style="background-color: #0747a6;">Radiant Documentation</a>
+        <a href="" class="btn text-white" style="background-color: #0747a6;">Assign</a>
+    </div>
 
-                <!-- Section -->
-                <td>
-                    {% if task.subsection.section %}
-                        <a href="{% url 'online_help:section_subsections' task.subsection.section.id %}">
-                            {{ task.subsection.section.name }}
-                        </a>
-                    {% else %}
-                        No section
-                    {% endif %}
-                </td>
+    <div class="bg-white">
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Document</th>
+                    <th>Section</th>
+                    <th>Subsection</th>
+                    <th>Writer</th>
+                    <th>SME</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                    <tr>
+                        <!-- Document -->
+                        <td>
+                            {% if task.subsection.section.document %}
+                                <a href="{% url 'online_help:document_sections' task.subsection.section.document.id %}">
+                                    {{ task.subsection.section.document.name }}
+                                </a>
+                            {% else %}
+                                No document
+                            {% endif %}
+                        </td>
+        
+                        <!-- Section -->
+                        <td>
+                            {% if task.subsection.section %}
+                                <a href="{% url 'online_help:section_subsections' task.subsection.section.id %}">
+                                    {{ task.subsection.section.name }}
+                                </a>
+                            {% else %}
+                                No section
+                            {% endif %}
+                        </td>
+        
+                        <!-- Subsection -->
+                        <td>
+                            {% if task.subsection %}
+                                <a href="{% url 'online_help:subsection_details' task.subsection.id %}">
+                                    {{ task.subsection.name }}
+                                </a>
+                            {% else %}
+                                No subsection
+                            {% endif %}
+                        </td>
+        
+                        <!-- Writer -->
+                        <td>
+                            {% if task.writer %}
+                                {{ task.writer.name }}
+                            {% else %}
+                                Unassigned
+                            {% endif %}
+                        </td>
+        
+                        <!-- SME -->
+                        <td>
+                            {% if task.sme %}
+                                {{ task.sme }}
+                            {% else %}
+                                Not assigned
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">No tasks found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        
+        </table>
+    </div>
+</div>
 
-                <!-- Subsection -->
-                <td>
-                    {% if task.subsection %}
-                        <a href="{% url 'online_help:subsection_details' task.subsection.id %}">
-                            {{ task.subsection.name }}
-                        </a>
-                    {% else %}
-                        No subsection
-                    {% endif %}
-                </td>
 
-                <!-- Writer -->
-                <td>
-                    {% if task.writer %}
-                        {{ task.writer.name }}
-                    {% else %}
-                        Unassigned
-                    {% endif %}
-                </td>
+<script>
+function filterContent() {
+    const input = document.getElementById("searchInput").value.toLowerCase();
+    const headings = document.querySelectorAll(".scroll-box h5, .scroll-box p");
+    const tables = document.querySelectorAll("table");
 
-                <!-- SME -->
-                <td>
-                    {% if task.sme %}
-                        {{ task.sme }}
-                    {% else %}
-                        Not assigned
-                    {% endif %}
-                </td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="5">No tasks found.</td>
-            </tr>
-        {% endfor %}
-    </tbody>
+    headings.forEach((heading, index) => {
+        const table = tables[index];
+        const rows = table.querySelectorAll("tbody tr");
+        let tableHasMatch = false;
 
-</table>
+        const headingMatch = heading.innerText.toLowerCase().includes(input);
+
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            const match = text.includes(input);
+            row.style.display = match ? "" : "none";
+            if (match) tableHasMatch = true;
+        });
+
+        heading.style.display = headingMatch || tableHasMatch ? "" : "none";
+        table.style.display = tableHasMatch ? "" : "none";
+    });
+}
+</script>
 {% endblock %}

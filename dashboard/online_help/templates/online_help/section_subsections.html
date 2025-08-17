@@ -23,7 +23,7 @@
     <div class="card shadow-sm">
         <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
             <h2 class="mb-0">{{ section.name }}</h2>
-            <a href="" class="btn btn-outline-dark btn-sm">Edit</a>
+            <a href="{% url 'online_help:section_subsections_edit' section.id %}" class="btn btn-outline-dark btn-sm">Edit</a>
         </div>
         <div class="card-body">
             <div class="mb-3">

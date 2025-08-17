@@ -15,12 +15,11 @@
     ›
     <a href="{% url 'online_help:section_subsections' subsection.section.id %}" class="hover-link">{{ subsection.section.name }}</a>
     ›
-    <a href="{% url 'online_help:section_subsections' subsection.id %}" class="hover-link">{{ subsection.name }}</a>
+    <a href="{% url 'online_help:subsection_details' subsection.id %}" class="hover-link">{{ subsection.name }}</a>
     ›
 </p>
 
 <p><a href="{% url 'online_help:section_subsections' subsection.section.id %}">← Back to {{ subsection.section.name }} Subsections</a></p>
-
 
 
 <div class="container mt-5">
@@ -37,8 +36,8 @@
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <p class="mb-0"><strong>{{ task.writer.name }}</strong></p>
                             <a href="?remove_writer={{ task.writer.name }}" class="btn btn-sm btn-danger"
-                               onclick="return confirm('Are you sure you want to remove {{ task.writer.name }}?')">
-                               Remove
+                               onclick="return confirm('Are you sure you want to remove {{ task.writer.name }}?')">
+                               Remove
                             </a>
                         </div>
                     {% endfor %}
@@ -49,74 +48,54 @@
         </div>
     </div>
 
-    
     <br>
+
     <div class="card shadow-sm">
         <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Subject Matter Expert (SME)</h5>
-            <!-- <button class="btn btn-outline-dark btn-sm" onclick="showAddSME()">Add SME</button> -->
+            <h5 class="mb-0">Subject Matter Experts (SMEs)</h5>
+            <button class="btn btn-outline-light btn-sm" onclick="showAddSME()">Add SME</button>
         </div>
         <div class="card-body">
             <div class="mb-3">
                 <h5 class="text-muted">Experts</h5>
-                {% if tasks %}
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <p class="mb-0" id="sme-display"><strong>{{ tasks.sme.name }}</strong></p>
-                        
-                        <form method="post" id="edit-sme-form" class="form-inline" style="display: none;">
-                            {% csrf_token %}
-                            <input type="hidden" name="edit_sme_form" value="1">
-                            <input type="text" name="sme" class="form-control form-control-sm mr-2" value="{{ tasks.sme.name }}" required>
-                            <button type="submit" class="btn btn-sm btn-success">Save</button>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEdit()">Cancel</button>
-                        </form>
-
-                        <div id="sme-buttons">
-                            <!-- <a href="?remove_writer={{ sme }}" class="btn btn-sm btn-danger"
-                            onclick="return confirm('Are you sure you want to remove {{ sme }}?')">
-                                Remove
-                            </a> -->
-                            <button class="btn btn-sm btn-primary ml-2" onclick="editSME()">Edit</button>
-                        </div>
-                    </div>
-
+                {% if sme_list %}
+                    <ul class="list-group">
+                        {% for sme_name in sme_list %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ sme_name }}
+                            </li>
+                        {% endfor %}
+                    </ul>
                 {% else %}
-                    <p class="text-muted">No SME assigned for this task.</p>
+                    <p class="text-muted">No SMEs assigned.</p>
                 {% endif %}
             </div>
         </div>
-
-
     </div>
 
-    <div class="container mt-5">
-        <div id="add-doc-form" class="add-form mt-3" style="display: none;">
-            <h3>Add Writer</h3>
-            <form method="post">
-                {% csrf_token %}
-                <div class="form-group">
-                    {{ form.writer.label_tag }}
-                    {{ form.writer }}
-                </div>
-                <button type="submit" class="btn btn-outline-dark btn-sm">Submit</button>
-            </form>
-        </div>
+    <div id="add-doc-form" class="add-form mt-3" style="display: none;">
+        <h3>Add Writer</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.writer.label_tag }}
+                {{ form.writer }}
+            </div>
+            <button type="submit" class="btn btn-outline-dark btn-sm">Submit</button>
+        </form>
     </div>
 
-    <div class="container mt-5">
-        <div id="add-doc-form2" class="add-form mt-3" style="display: none;">
-            <h3>Add SME</h3>
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="sme_form" value="1">  <!-- To distinguish this form -->
-                <div class="form-group">
-                    {{ sme_form.sme.label_tag }}
-                    {{ sme_form.sme }}
-                </div>
-                <button type="submit" class="btn btn-outline-dark btn-sm">Submit</button>
-            </form>
-        </div>
-
+    <div id="add-doc-form2" class="add-form mt-3" style="display: none;">
+        <h3>Add SME</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="sme_form" value="1">
+            <div class="form-group">
+                {{ sme_form.sme.label_tag }}
+                {{ sme_form.sme }}
+            </div>
+            <button type="submit" class="btn btn-outline-dark btn-sm">Submit</button>
+        </form>
     </div>
 </div>
 

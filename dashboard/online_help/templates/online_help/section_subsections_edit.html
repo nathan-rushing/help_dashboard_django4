@@ -1,0 +1,52 @@
+{% extends "online_help/base.html" %}
+{% block content %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+<p><a href="{% url 'online_help:section_subsections' section.id %}">← Back to {{ section.name}}</a></p>
+
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Subsection Editor for "{{ section.name }}"</h2>
+            <button class="btn btn-outline-dark btn-sm" onclick="showAddForm()">Add Subsection</button>
+        </div>
+
+        <div class="card-body">
+            <div class="doc-list">
+                {% for subsection in subsections %}
+                <div class="doc-item d-flex justify-content-between align-items-center border-bottom py-2">
+                    <span>{{ subsection.name }}</span>
+                    <div>
+                        <a href="" 
+                        class="btn btn-warning btn-sm">Rename</a>
+                        <a href="" 
+                        class="btn btn-outline-danger btn-sm">Remove</a>
+                    </div>
+                </div>
+                {% endfor %}
+
+            </div>
+
+            <div id="add-doc-form" class="add-form mt-4" style="display: none;">
+                <h4>Add Subsection</h4>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-outline-dark btn-sm">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showAddForm() {
+    const form = document.getElementById('add-doc-form');
+    form.style.display = 'block';
+    form.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+{% endblock content %}
