@@ -1,0 +1,38 @@
+{% extends 'online_help/base.html' %}
+{% block content %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+
+<!-- Breadcrumbs -->
+<p>
+    <a href="{% url 'online_help:tasks_test' %}"> All Tasks </a>
+    ›
+    <a href="{% url 'online_help:document_list' %}">Radiant Documentation</a>
+    ›
+    <a href="{% url 'online_help:document_sections' section.document.id %}">{{ section.document.name }}</a>
+    ›
+    <a href="{% url 'online_help:section_subsections' section.id %}">{{ section.name }}</a>
+    ›
+</p>
+
+<h1>Subsections for "{{ section.name }}"</h1>
+
+<ul>
+    {% for subsection in subsections %}
+        <li>
+            <a href="{% url 'online_help:subsection_details' subsection.id %}">
+                {{ subsection.name }}
+            </a>
+        </li>
+    {% empty %}
+        <li>No subsections found for this section.</li>
+    {% endfor %}
+</ul>
+
+<p><a href="{% url 'online_help:document_sections' section.document.id %}">⬅ Back to {{ section.document.name }} Sections</a></p>
+
+
+{% endblock %}
+
+

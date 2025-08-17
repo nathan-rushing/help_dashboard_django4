@@ -24,7 +24,33 @@ from .models import (
 
 # )
 
-
 def home_test(request):
+    # Fetch all tasks with related data
     tasks = Task.objects.select_related("subsection__section__document", "writer").all()
     return render(request, "online_help/home_test.html", {"tasks": tasks})
+
+def document_list(request):
+    documents = Document.objects.all()
+    return render(request, "online_help/document_list.html", {"documents": documents})
+
+
+def tasks_test(request):
+    tasks = Task.objects.select_related("subsection__section__document", "writer").all()
+    return render(request, "online_help/tasks_test.html", {"tasks": tasks})
+
+def document_sections(request, document_id):
+    document = get_object_or_404(Document, id=document_id)
+    sections = document.sections.all()  # uses related_name="sections"
+    return render(request, "online_help/document_sections.html", {"document": document, "sections": sections})
+
+
+def section_subsections(request, section_id):
+    section = get_object_or_404(Section, id=section_id)
+    subsections = section.subsections.all()  # uses related_name="subsections"
+    return render(request, "online_help/section_subsections.html", {"section": section, "subsections": subsections})
+
+
+def subsection_details(request, subsection_id):
+    subsection = get_object_or_404(Subsection, id=subsection_id)
+    tasks = subsection.tasks.all()  # All tasks under this subsection
+    return render(request, "online_help/subsection_details.html", {"subsection": subsection, "tasks": tasks})

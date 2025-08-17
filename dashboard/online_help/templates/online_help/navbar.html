@@ -9,10 +9,10 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">  <!-- "me-auto" aligns the left items to the left -->
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.url_name == 'home_test' %}active{% endif %}" href="">Dashboard</a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'home_test' %}active{% endif %}" href="{% url 'online_help:home_test' %}">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.url_name == 'tasks_test' %}active{% endif %}" href="">Tasks</a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'tasks_test' %}active{% endif %}" href="{% url 'online_help:tasks_test' %}">Tasks</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.url_name == 'view_all' %}active{% endif %}" href="">All</a>

@@ -1,0 +1,29 @@
+{% extends 'online_help/base.html' %}
+{% block content %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+
+    <!-- Breadcrumbs -->
+    <p>
+        <a href="{% url 'online_help:tasks_test' %}"> All Tasks </a>
+        ›
+        <a href="{% url 'online_help:document_list' %}">Radiant Documentation</a>
+        ›
+    </p>
+
+    <h1>All Documents</h1>
+    <ul>
+        {% for doc in documents %}
+            <li>
+                <a href="{% url 'online_help:document_sections' doc.id %}">{{ doc.name }}</a>
+            </li>
+        {% empty %}
+            <li>No documents found.</li>
+        {% endfor %}
+    </ul>
+
+    <p><a href="{% url 'online_help:tasks_test' %}">⬅ Back to all tasks</a></p>
+
+
+{% endblock %}

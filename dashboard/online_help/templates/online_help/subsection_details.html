@@ -1,0 +1,49 @@
+{% extends 'online_help/base.html' %}
+{% block content %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+
+<!-- Breadcrumbs -->
+<p>
+    <a href="{% url 'online_help:tasks_test' %}"> All Tasks </a>
+    ›
+    <a href="{% url 'online_help:document_list' %}">Radiant Documentation</a>
+    ›
+    <a href="{% url 'online_help:document_sections' subsection.section.document.id %}">{{ subsection.section.document.name }}</a>
+    ›
+    <a href="{% url 'online_help:section_subsections' subsection.section.id %}">{{ subsection.section.name }}</a>
+    ›
+    <a href="{% url 'online_help:section_subsections' subsection.id %}">{{ subsection.name }}</a>
+    ›
+</p>
+    <h1>Subsection: {{ subsection.name }}</h1>
+
+    {% if tasks %}
+        {% for task in tasks %}
+            <div style="border:1px solid #000; margin:10px; padding:10px;">
+                <div>
+                    <strong>Writer:</strong>
+                    {% if task.writer %}
+                        {{ task.writer.name }}
+                    {% else %}
+                        Unassigned
+                    {% endif %}
+                </div>
+
+                <div>
+                    <strong>SME:</strong>
+                    {% if task.sme %}
+                        {{ task.sme }}
+                    {% else %}
+                        Not assigned
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No tasks available for this subsection.</p>
+    {% endif %}
+
+    <p><a href="{% url 'online_help:section_subsections' subsection.section.id %}">⬅ Back to {{ subsection.section.name }} Subsections</a></p>
+{% endblock %}
