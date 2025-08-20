@@ -11,7 +11,7 @@
     <div class="card shadow-sm">
         <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
             <h2 class="mb-0">Section Editor</h2>
-            <button class="btn btn-outline-dark btn-sm" onclick="showAddForm()">Add Subsection</button>
+            <button class="btn btn-outline-dark btn-sm" onclick="showAddForm()">Add Section</button>
         </div>
 
         <div class="card-body">
@@ -20,18 +20,20 @@
                 <div class="doc-item d-flex justify-content-between align-items-center border-bottom py-2">
                     <span>{{ section.name }}</span>
                     <div>
-                        <a href="" 
+                        <a href="{% url 'online_help:section_rename' section.id %}" 
                         class="btn btn-warning btn-sm">Rename</a>
-                        <a href="" 
-                        class="btn btn-outline-danger btn-sm">Remove</a>
+                        <a href="{% url 'online_help:section_delete' section.id %}" 
+                        class="btn btn-outline-danger btn-sm"
+                        onclick="return confirm('Are you sure you want to delete this section?');">
+                        Remove
+                        </a>
                     </div>
                 </div>
                 {% endfor %}
-
             </div>
 
             <div id="add-doc-form" class="add-form mt-4" style="display: none;">
-                <h4>Add Subsection</h4>
+                <h4>Add Section</h4>
                 <form method="post">
                     {% csrf_token %}
                     {{ form.as_p }}
