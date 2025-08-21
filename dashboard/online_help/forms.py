@@ -38,6 +38,7 @@ class WriterAssignForm(forms.ModelForm):
 
     writer = forms.ModelChoiceField(
         queryset=Writer.objects.all(),
-        required=True,
+        required=False,   # ✅ allow blank
+        empty_label="No Writer Assigned",  # ✅ dropdown option for blank
         label="Select Writer"
     )
