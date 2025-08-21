@@ -3,7 +3,7 @@
 {% load static %}
 
 <link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
-<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+<!-- <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"> -->
 
 <!-- Breadcrumbs -->
 <p>
@@ -18,81 +18,69 @@
         <a href="" class="btn text-white" style="background-color: #0747a6;">Assign</a>
     </div>
 
-    <div class="bg-white">
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Document</th>
-                    <th>Section</th>
-                    <th>Subsection</th>
-                    <th>Writer</th>
-                    <th>SME</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for task in tasks %}
-                    <tr>
-                        <!-- Document -->
-                        <td>
-                            {% if task.subsection.section.document %}
-                                <a href="{% url 'online_help:document_sections' task.subsection.section.document.id %}">
-                                    {{ task.subsection.section.document.name }}
-                                </a>
-                            {% else %}
-                                No document
-                            {% endif %}
-                        </td>
-        
-                        <!-- Section -->
-                        <td>
-                            {% if task.subsection.section %}
-                                <a href="{% url 'online_help:section_subsections' task.subsection.section.id %}">
-                                    {{ task.subsection.section.name }}
-                                </a>
-                            {% else %}
-                                No section
-                            {% endif %}
-                        </td>
-        
-                        <!-- Subsection -->
-                        <td>
-                            {% if task.subsection %}
-                                <a href="{% url 'online_help:subsection_details' task.subsection.id %}">
-                                    {{ task.subsection.name }}
-                                </a>
-                            {% else %}
-                                No subsection
-                            {% endif %}
-                        </td>
-        
-                        <!-- Writer -->
-                        <td>
-                            {% if task.writer %}
-                                {{ task.writer.name }}
-                            {% else %}
-                                Unassigned
-                            {% endif %}
-                        </td>
-        
-                        <!-- SME -->
-                        <td>
-                            {% if task.sme %}
-                                {{ task.sme }}
-                            {% else %}
-                                Not assigned
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="5">No tasks found.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        
-        </table>
+    <div class="row mt-4">
+        {% for document, tasks in grouped_tasks.items %}
+        <div class="col-md-6 mb-4">
+            <div class="bg-light rounded shadow-sm">
+                <div class="p-3 text-white text-center" style="background-color: #0747a6;">
+                    {% if document %}
+                        <a href="{% url 'online_help:document_sections' document.id %}" class="hover-link text-white">{{ document.name }}</a>
+                    {% else %}
+                        <span>No Document</span>
+                    {% endif %}
+                </div>
+                <div class="p-2">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="border: 1px solid #444; padding: 8px;">Section</th>
+                                <th style="border: 1px solid #444; padding: 8px;">Subsection</th>
+                                <th style="border: 1px solid #444; padding: 8px;">Writer</th>
+                                <th style="border: 1px solid #444; padding: 8px;">SME</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                            <tr>
+                                <td style="background-color: {{ task.color }};">
+                                    {% if task.subsection.section %}
+                                        <a href="{% url 'online_help:section_subsections' task.subsection.section.id %}" class="hover-link">
+                                            {{ task.subsection.section.name }}
+                                        </a>
+                                    {% else %}
+                                        No section
+                                    {% endif %}
+                                </td>
+                                <td style="background-color: {{ task.color }};">
+                                    {% if task.subsection %}
+                                        <a href="{% url 'online_help:subsection_details' task.subsection.id %}" class="hover-link">
+                                            {{ task.subsection.name }}
+                                        </a>
+                                    {% else %}
+                                        No subsection
+                                    {% endif %}
+                                </td>
+                                <td style="background-color: {{ task.color }};">
+                                    {% if task.writer and task.writer.name %}
+                                        {{ task.writer.name }}
+                                    {% else %}
+                                        Unassigned
+                                    {% endif %}
+                                </td>
+
+                                <td style="background-color: {{ task.color }};">{{ task.sme|default:"Not assigned" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
     </div>
+
 </div>
+
 
 
 <script>

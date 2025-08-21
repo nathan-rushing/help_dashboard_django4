@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 from collections import defaultdict, Counter
 import json
 import math
@@ -12,30 +9,16 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.http import require_POST
-from django.db.models import Prefetch, F, Value, CharField
+from django.db.models import Prefetch, F, Value, CharField, Q
 from django.db.models.functions import Coalesce
-from .models import Task, Subsection, Section, Document, Writer, SME
-
 
 from .models import (
-    Document, Section, Subsection, Writer, Task
+    Document, Section, Subsection, Writer, Task, SME
+)
+from .forms import (
+    DocumentForm, SectionForm, SubsectionForm, TaskForm, WriterAssignForm
 )
 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Document
-from .forms import DocumentForm
-
-from django.shortcuts import render, get_object_or_404
-from .models import Subsection
-
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Section, Subsection
-from .forms import SubsectionForm
-
-# views.py
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Document, Section
-from .forms import SectionForm
 
 def home_test(request):
     # Fetch all tasks with related data
@@ -44,11 +27,18 @@ def home_test(request):
                   "online_help/home_test.html", 
                   {"tasks": tasks})
 
+from collections import defaultdict
+
 def tasks_test(request):
     tasks = Task.objects.select_related("subsection__section__document", "writer").all()
-    return render(request, 
-                  "online_help/tasks_test.html", 
-                  {"tasks": tasks})
+    grouped_tasks = defaultdict(list)
+    for task in tasks:
+        document = task.subsection.section.document if task.subsection and task.subsection.section else None
+        grouped_tasks[document].append(task)
+
+    return render(request, "online_help/tasks_test.html", {"grouped_tasks": dict(grouped_tasks)})
+
+
 
 def document_list(request):
     documents = Document.objects.all()
@@ -148,9 +138,7 @@ def section_subsections(request, section_id):
 
 
 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Section, Subsection
-from .forms import SubsectionForm
+
 
 def section_subsections_edit(request, section_id):
     section = get_object_or_404(Section, id=section_id)
@@ -199,14 +187,6 @@ def subsection_rename(request, subsection_id):
         {"section": section, "subsection": subsection, "form": form},
     )
 
-from django.shortcuts import get_object_or_404, render, redirect
-from .models import Subsection, Task, SME
-
-from django.shortcuts import get_object_or_404, redirect, render
-from .models import Subsection, Task, Writer
-from .forms import TaskForm, WriterAssignForm  # Assuming you already have a form for Writer assignment
-from django.db.models import Q
-
 
 # views.py
 def subsection_details(request, subsection_id):
@@ -238,19 +218,6 @@ def subsection_details(request, subsection_id):
     })
 
 
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
-
-
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Subsection, SME
-from django.views.decorators.http import require_POST
-
-# online_help/views.py
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
-from django.views.decorators.http import require_POST
-from .models import Subsection, SME, Task
 
 @require_POST
 def edit_sme(request, sme_id):
