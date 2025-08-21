@@ -17,7 +17,8 @@ urlpatterns = [
     path("section_subsections/<int:section_id>/", views.section_subsections, name="section_subsections"),
     path("section_subsections_edit/<int:section_id>/subsections/edit/", views.section_subsections_edit, name="section_subsections_edit"),
     path("subsection/<int:subsection_id>/rename/", views.subsection_rename, name="subsection_rename"),
-
     path("subsection_details/<int:subsection_id>/", views.subsection_details, name="subsection_details"),
-
+    path("sme/<int:pk>/edit/", views.edit_sme, name="edit_sme"),
+    path("edit_sme/<int:sme_id>/", views.edit_sme, name="edit_sme"),
+    path("add_sme/<int:subsection_id>/", views.add_sme, name="add_sme"),
 ]

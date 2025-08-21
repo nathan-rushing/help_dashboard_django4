@@ -36,6 +36,9 @@ class Writer(models.Model):
 class SME(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
+    def __str__(self):
+        return self.name
+
 class Task(models.Model):
     COLOR_CHOICES = [
         ("green", "Green - Ready for QA"),

@@ -211,34 +211,14 @@ from django.db.models import Q
 def subsection_details(request, subsection_id):
     subsection = get_object_or_404(Subsection, id=subsection_id)
 
-    # Fetch tasks with writers and SMEs
     tasks = subsection.tasks.select_related("writer", "sme").all()
 
-    # SME list (names only)
+    # Get distinct SMEs related to this subsection
     sme_list = (
-        tasks.filter(sme__isnull=False)
-             .values_list("sme__name", flat=True)
-             .distinct()
-             .order_by("sme__name")
+        SME.objects.filter(tasks__subsection=subsection)
+        .distinct()
+        .order_by("name")
     )
-
-    # --- Handle Add Writer ---
-    if request.method == "POST" and "writer_form" in request.POST:
-        writer_id = request.POST.get("writer")
-        if writer_id:
-            writer = Writer.objects.get(id=writer_id)
-            # Create Task only if writer not already assigned
-            Task.objects.get_or_create(subsection=subsection, writer=writer)
-        return redirect("online_help:subsection_details", subsection_id=subsection.id)
-
-    # --- Handle Remove Writer ---
-    remove_writer_id = request.GET.get("remove_writer")
-    if remove_writer_id:
-        Task.objects.filter(subsection=subsection, writer_id=remove_writer_id).delete()
-        return redirect("online_help:subsection_details", subsection_id=subsection.id)
-
-    # Form for adding writers
-    form = TaskForm()
 
     return render(
         request,
@@ -247,6 +227,65 @@ def subsection_details(request, subsection_id):
             "subsection": subsection,
             "tasks": tasks,
             "sme_list": sme_list,
-            "form": form,
         },
     )
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Subsection, SME
+from django.views.decorators.http import require_POST
+
+# online_help/views.py
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+from .models import Subsection, SME, Task
+
+@require_POST
+def edit_sme(request, sme_id):
+    """
+    Rename an existing SME (global), then redirect back to the page the user came from.
+    """
+    sme = get_object_or_404(SME, pk=sme_id)
+    new_name = (request.POST.get("name") or "").strip()
+    if not new_name:
+        messages.error(request, "SME name cannot be empty.")
+        return redirect(request.META.get("HTTP_REFERER", "online_help:document_list"))
+
+    # If another SME already has this name, re-link tasks and delete the old one (merge).
+    existing = SME.objects.filter(name=new_name).exclude(pk=sme.pk).first()
+    if existing:
+        Task.objects.filter(sme=sme).update(sme=existing)
+        sme.delete()
+        messages.success(request, f"SME renamed and merged into '{existing.name}'.")
+    else:
+        sme.name = new_name
+        sme.save()
+        messages.success(request, "SME updated successfully.")
+
+    return redirect(request.META.get("HTTP_REFERER", "online_help:document_list"))
+
+
+@require_POST
+def add_sme(request, subsection_id):
+    """
+    Create (or get) an SME by name and assign it to tasks under the given subsection.
+    Here we assign it only to tasks that currently have no SME.
+    """
+    subsection = get_object_or_404(Subsection, pk=subsection_id)
+    name = (request.POST.get("name") or "").strip()
+
+    if not name:
+        messages.error(request, "Please provide a name for the SME.")
+        return redirect("online_help:subsection_details", subsection_id=subsection.id)
+
+    sme, _ = SME.objects.get_or_create(name=name)
+
+    # Assign this SME to all tasks in the subsection that don't have an SME yet.
+    Task.objects.filter(subsection=subsection, sme__isnull=True).update(sme=sme)
+
+    messages.success(request, f"SME '{sme.name}' assigned to this subsection’s tasks.")
+    return redirect("online_help:subsection_details", subsection_id=subsection.id)
