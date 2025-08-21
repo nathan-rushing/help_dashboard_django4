@@ -204,31 +204,39 @@ from .models import Subsection, Task, SME
 
 from django.shortcuts import get_object_or_404, redirect, render
 from .models import Subsection, Task, Writer
-from .forms import TaskForm  # Assuming you already have a form for Writer assignment
+from .forms import TaskForm, WriterAssignForm  # Assuming you already have a form for Writer assignment
 from django.db.models import Q
 
 
+# views.py
 def subsection_details(request, subsection_id):
     subsection = get_object_or_404(Subsection, id=subsection_id)
+    tasks = Task.objects.filter(subsection=subsection)
+    sme_list = SME.objects.filter(tasks__subsection=subsection)  # ✅ fixed here
 
-    tasks = subsection.tasks.select_related("writer", "sme").all()
+    # Handle writer add
+    if request.method == "POST" and "writer_form" in request.POST:
+        form = WriterAssignForm(request.POST)
+        if form.is_valid():
+            writer = form.cleaned_data['writer']
+            Task.objects.create(subsection=subsection, writer=writer)
+            return redirect("online_help:subsection_details", subsection_id=subsection.id)
+    else:
+        form = WriterAssignForm()
 
-    # Get distinct SMEs related to this subsection
-    sme_list = (
-        SME.objects.filter(tasks__subsection=subsection)
-        .distinct()
-        .order_by("name")
-    )
+    # Handle writer removal
+    remove_writer_id = request.GET.get("remove_writer")
+    if remove_writer_id:
+        Task.objects.filter(subsection=subsection, writer_id=remove_writer_id).delete()
+        return redirect("online_help:subsection_details", subsection_id=subsection.id)
 
-    return render(
-        request,
-        "online_help/subsection_details.html",
-        {
-            "subsection": subsection,
-            "tasks": tasks,
-            "sme_list": sme_list,
-        },
-    )
+    return render(request, "online_help/subsection_details.html", {
+        "subsection": subsection,
+        "tasks": tasks,
+        "sme_list": sme_list,
+        "form": form,
+    })
+
 
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
