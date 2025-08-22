@@ -21,4 +21,8 @@ urlpatterns = [
     path("sme/<int:pk>/edit/", views.edit_sme, name="edit_sme"),
     path("edit_sme/<int:sme_id>/", views.edit_sme, name="edit_sme"),
     path("add_sme/<int:subsection_id>/", views.add_sme, name="add_sme"),
+    path("assign_task/", views.assign_task, name="assign_task"),
+    # AJAX endpoints for assign_task
+    path('ajax/load-sections/', views.load_sections, name='ajax_load_sections'),
+    path('ajax/load-subsections/', views.load_subsections, name='ajax_load_subsections'),
 ]

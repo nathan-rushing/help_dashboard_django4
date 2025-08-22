@@ -35,10 +35,11 @@
                     {% for task in tasks %}
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <p class="mb-0"><strong>{{ task.writer.name }}</strong></p>
-                            <a href="?remove_writer={{ task.writer.id }}" class="btn btn-sm btn-danger"
-                            onclick="return confirm('Are you sure you want to remove {{ task.writer.name }}?')">
+                            <a href="?remove_task={{ task.id }}" class="btn btn-sm btn-danger"
+                            onclick="return confirm('Are you sure you want to remove this writer assignment?')">
                             Remove
                             </a>
+
                         </div>
                     {% endfor %}
                 {% else %}

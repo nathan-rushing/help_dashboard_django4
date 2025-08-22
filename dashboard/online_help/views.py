@@ -204,10 +204,9 @@ def subsection_details(request, subsection_id):
     else:
         form = WriterAssignForm()
 
-    # Handle writer removal
-    remove_writer_id = request.GET.get("remove_writer")
-    if remove_writer_id:
-        Task.objects.filter(subsection=subsection, writer_id=remove_writer_id).delete()
+    remove_task_id = request.GET.get("remove_task")
+    if remove_task_id:
+        Task.objects.filter(id=remove_task_id, subsection=subsection).delete()
         return redirect("online_help:subsection_details", subsection_id=subsection.id)
 
     return render(request, "online_help/subsection_details.html", {
@@ -264,3 +263,56 @@ def add_sme(request, subsection_id):
 
     messages.success(request, f"SME '{sme.name}' assigned to this subsection’s tasks.")
     return redirect("online_help:subsection_details", subsection_id=subsection.id)
+
+# views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Task
+from .forms import AssignTaskForm
+
+
+def assign_task(request):
+    if request.method == 'POST':
+        form = AssignTaskForm(request.POST)
+
+        if form.is_valid():
+            document = form.cleaned_data['document']
+            section = form.cleaned_data['section']
+            sub_section = form.cleaned_data['sub_section']
+            writer = form.cleaned_data['writer']
+            sme = form.cleaned_data['sme']
+
+            print("Form submitted with:", document, section, sub_section, writer, sme)
+
+            # Find task(s) for the given subsection
+            task = Task.objects.filter(subsection=sub_section).first()
+
+            if not task:
+                print("No matching task found.")
+                form.add_error(None, "Task not found for the selected subsection.")
+            else:
+                # Assign writer and SME to the task
+                task.writer = writer
+                task.sme = sme
+                task.save()
+
+                print("Task updated:", task)
+                return redirect('online_help:tasks_test')  # Redirect after success
+
+        else:
+            print("Form is invalid:", form.errors)
+
+    else:
+        form = AssignTaskForm()
+
+    return render(request, 'online_help/assign_task.html', {'form': form})
+
+# For assign_task AJAX functionality
+def load_sections(request):
+    document_id = request.GET.get('document')
+    sections = Section.objects.filter(document_id=document_id).values("id", "name")
+    return JsonResponse(list(sections), safe=False)
+
+def load_subsections(request):
+    section_id = request.GET.get('section')
+    subsections = Subsection.objects.filter(section_id=section_id).values("id", "name")
+    return JsonResponse(list(subsections), safe=False)
