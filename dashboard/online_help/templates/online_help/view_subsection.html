@@ -1,0 +1,45 @@
+{% extends "online_help/base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+
+<div class="container mt-5">
+    <p><a href="{% url 'online_help:home_test' %}">← Back to Home</a></p>
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">{{ section }}</h2>
+            <a href="" class="btn btn-outline-dark btn-sm">Edit</a>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <h5 class="text-muted">Writer</h5>
+                <p class="font-weight-bold">{{ writer }}</p>
+            </div>
+            <div class="mb-3">
+                <h5 class="text-muted">Subsection</h5>
+                <p class="font-weight-bold">{{ subsection }}</p>
+            </div>
+            <div class="mb-3">
+                <h5 class="text-muted">Color</h5>
+                <p class="font-weight-bold">{{ color }}</p>
+            </div>
+            <div class="mb-3">
+                <h5 class="text-muted">Comments</h5>
+                <p class="font-weight-bold">{{ comments }}</p>
+            </div>
+            <div class="mb-3">
+                <h5 class="text-muted">SME</h5>
+                <p class="font-weight-bold">{{ sme }}</p>
+            </div>
+            <div class="mb-3">
+                <h5 class="text-muted">Completion</h5>
+                <p class="font-weight-bold">{{ completion }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -19,15 +19,64 @@ from .forms import (
     DocumentForm, SectionForm, SubsectionForm, TaskForm, WriterAssignForm
 )
 
-
-def home_test(request):
-    # Fetch all tasks with related data
-    tasks = Task.objects.select_related("subsection__section__document", "writer").all()
-    return render(request, 
-                  "online_help/home_test.html", 
-                  {"tasks": tasks})
+from collections import defaultdict
 
 from collections import defaultdict
+from django.db.models import Value
+from django.db.models.functions import Coalesce
+
+# views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Task
+from .forms import AssignTaskForm
+
+def home_test(request):
+    writers = Writer.objects.annotate(
+        sort_name=Coalesce('name', Value('zzz'))
+    ).order_by('sort_name')
+
+    tasks = Task.objects.select_related('writer', 'subsection__section__document')
+
+    writer_tasks_grouped = {}
+    color_classes = [
+        "color-blue", "color-green", "color-red", "color-purple",
+        "color-cyan", "color-orange", "color-teal", "color-yellow"
+    ]
+
+    writer_color_classes = {}
+    for i, writer in enumerate(writers):
+        writer_color_classes[writer.pk] = color_classes[i % len(color_classes)]
+
+        grouped_by_doc = defaultdict(list)
+        for task in tasks:
+            if task.writer_id == writer.pk:
+                document = task.subsection.section.document
+                grouped_by_doc[document].append(task)
+        writer_tasks_grouped[writer.pk] = dict(grouped_by_doc)
+
+    ctx = {
+        'writers': writers,
+        'writer_tasks_grouped': writer_tasks_grouped,
+        'writer_color_classes': writer_color_classes,
+    }
+    return render(request, 'online_help/home_test.html', ctx)
+
+from django.shortcuts import render, get_object_or_404
+from .models import Task
+
+def view_subsection(request, subsection_id):
+    task = get_object_or_404(Task, subsection_id=subsection_id)
+
+    context = {
+        "writer": task.writer.name if task.writer else "Unassigned",
+        "section": task.subsection.section.name,
+        "subsection": task.subsection.name,
+        "color": task.color,
+        "comments": task.comments,
+        "sme": task.sme.name if task.sme else "Unassigned",
+    }
+    return render(request, "online_help/view_subsection.html", context)
+
 
 def tasks_test(request):
     tasks = Task.objects.select_related("subsection__section__document", "writer").all()
@@ -135,10 +184,6 @@ def section_subsections(request, section_id):
                   "online_help/section_subsections.html", 
                   {"section": section, 
                    "subsections": subsections})
-
-
-
-
 
 def section_subsections_edit(request, section_id):
     section = get_object_or_404(Section, id=section_id)
@@ -264,11 +309,6 @@ def add_sme(request, subsection_id):
     messages.success(request, f"SME '{sme.name}' assigned to this subsection’s tasks.")
     return redirect("online_help:subsection_details", subsection_id=subsection.id)
 
-# views.py
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Task
-from .forms import AssignTaskForm
-
 
 def assign_task(request):
     if request.method == 'POST':
@@ -281,13 +321,10 @@ def assign_task(request):
             writer = form.cleaned_data['writer']
             sme = form.cleaned_data['sme']
 
-            print("Form submitted with:", document, section, sub_section, writer, sme)
-
             # Find task(s) for the given subsection
             task = Task.objects.filter(subsection=sub_section).first()
 
             if not task:
-                print("No matching task found.")
                 form.add_error(None, "Task not found for the selected subsection.")
             else:
                 # Assign writer and SME to the task
@@ -295,7 +332,6 @@ def assign_task(request):
                 task.sme = sme
                 task.save()
 
-                print("Task updated:", task)
                 return redirect('online_help:tasks_test')  # Redirect after success
 
         else:
@@ -316,3 +352,4 @@ def load_subsections(request):
     section_id = request.GET.get('section')
     subsections = Subsection.objects.filter(section_id=section_id).values("id", "name")
     return JsonResponse(list(subsections), safe=False)
+

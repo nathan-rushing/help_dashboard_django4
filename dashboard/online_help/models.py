@@ -52,6 +52,14 @@ class Task(models.Model):
     sme = models.ForeignKey("SME", on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
     comments = models.TextField(blank=True, null=True)
     color = models.CharField(max_length=20, choices=COLOR_CHOICES, default="white")
+    # completion = models.CharField(max_length=20, choices=COLOR_CHOICES, default="0%")
 
     def __str__(self):
         return f"Task: {self.subsection.name} ({self.writer.name if self.writer else 'Unassigned'})"
+
+# class Version(models.Model):
+#     number = models.CharField(max_length=20)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     def __str__(self):
+#         return self.number
