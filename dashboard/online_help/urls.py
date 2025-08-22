@@ -26,4 +26,5 @@ urlpatterns = [
     path('ajax/load-sections/', views.load_sections, name='ajax_load_sections'),
     path('ajax/load-subsections/', views.load_subsections, name='ajax_load_subsections'),
     path("view_subsection/<int:subsection_id>/", views.view_subsection, name="view_subsection"),
+    path("view_subsection/<int:subsection_id>/edit/", views.view_subsection_edit, name="view_subsection_edit"),
 ]

@@ -74,8 +74,30 @@ def view_subsection(request, subsection_id):
         "color": task.color,
         "comments": task.comments,
         "sme": task.sme.name if task.sme else "Unassigned",
+        "completion": getattr(task.subsection, "completion", "N/A"),
+        "task_id": subsection_id,
     }
     return render(request, "online_help/view_subsection.html", context)
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Task
+from .forms import TaskEditForm
+
+def view_subsection_edit(request, subsection_id):
+    task = get_object_or_404(Task, subsection_id=subsection_id)
+
+    if request.method == "POST":
+        form = TaskEditForm(request.POST, instance=task)
+        if form.is_valid():
+            form.save()
+            return redirect("online_help:view_subsection", subsection_id=subsection_id)
+    else:
+        form = TaskEditForm(instance=task)
+
+    return render(request, "online_help/view_subsection_edit.html", {
+        "form": form,
+        "task": task,
+    })
 
 
 def tasks_test(request):

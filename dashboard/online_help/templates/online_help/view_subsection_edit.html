@@ -1,0 +1,64 @@
+{% extends "online_help/base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="container mt-5">
+    <p><a href="{% url 'online_help:view_subsection' task.subsection.id %}">← Back to Details</a></p>
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Edit Subsection - {{ task.subsection.name }}</h2>
+        </div>
+        <div class="card-body">
+
+            <!-- Non-editable details -->
+            <!-- Writer -->
+            <div class="mb-3">
+            <h5 class="text-muted">Writer</h5>
+            <p class="font-weight-bold">
+                {% if task.writer %}{{ task.writer.name }}{% else %}Unassigned{% endif %}
+            </p>
+            </div>
+
+            <!-- Section -->
+            <div class="mb-3">
+                <h5 class="text-muted">Section</h5>
+                <p class="font-weight-bold">{{ task.subsection.section.name }}</p>
+            </div>
+
+            <!-- Subsection -->
+            <div class="mb-3">
+                <h5 class="text-muted">Subsection</h5>
+                <p class="font-weight-bold">{{ task.subsection.name }}</p>
+            </div>
+
+            <!-- SME -->
+            <div class="mb-3">
+            <h5 class="text-muted">SME</h5>
+            <p class="font-weight-bold">
+                {% if task.sme %}{{ task.sme.name }}{% else %}Unassigned{% endif %}
+            </p>
+            </div>
+
+            <hr>
+
+            <!-- Editable fields -->
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_color">Color</label>
+                    {{ form.color }}
+                </div>
+                <div class="form-group">
+                    <label for="id_comments">Comments</label>
+                    {{ form.comments }}
+                </div>
+                <button type="submit" class="btn btn-success">Save Changes</button>
+                <a href="{% url 'online_help:view_subsection' task.subsection.id %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

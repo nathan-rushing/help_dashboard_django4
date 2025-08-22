@@ -9,6 +9,11 @@ from .models import Task, Writer
 from django import forms
 from .models import Writer, Task
 
+from django import forms
+from .models import Document, Section, Subsection, Writer, SME
+
+from django import forms
+from .models import Task
 
 class DocumentForm(forms.ModelForm):
     class Meta:
@@ -44,50 +49,6 @@ class WriterAssignForm(forms.ModelForm):
         label="Select Writer"
     )
 
-# class AssignTaskForm(forms.Form):
-#     document = forms.ChoiceField(
-#         label="Document",
-#         required=True,
-#         widget=forms.Select(attrs={'id': 'id_document', 'class': 'form-control'})
-#     )
-#     section = forms.ChoiceField(
-#         label="Section",
-#         required=True,
-#         widget=forms.Select(attrs={'id': 'id_section', 'class': 'form-control'})
-#     )
-#     sub_section = forms.ChoiceField(
-#         label="Subsection",
-#         required=True,
-#         widget=forms.Select(attrs={'id': 'id_sub_section', 'class': 'form-control'})
-#     )
-#     writer = forms.ModelChoiceField(
-#         queryset=Writer.objects.all(),
-#         label="Writer",
-#         required=True,
-#         widget=forms.Select(attrs={'class': 'form-control'})
-#     )
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-#         documents = Document.objects.filter(id__in=Task.objects.values_list('document', flat=True).distinct())
-#         self.fields['document'].choices = [('', 'Select document')] + [(doc.id, doc.title) for doc in documents]
-
-#         self.fields['section'].choices = [('', 'Select section')]
-#         self.fields['sub_section'].choices = [('', 'Select subsection')]
-
-#         if 'document' in self.data:
-#             document = self.data.get('document')
-#             sections = Task.objects.filter(document=document).values_list('section', flat=True).distinct()
-#             self.fields['section'].choices += [(s, s) for s in sections]
-
-#         if 'section' in self.data:
-#             section = self.data.get('section')
-#             subsections = Task.objects.filter(section=section).values_list('sub_section', flat=True).distinct()
-#             self.fields['sub_section'].choices += [(s, s) for s in subsections]
-
-from django import forms
-from .models import Document, Section, Subsection, Writer, SME
 
 class AssignTaskForm(forms.Form):
     document = forms.ModelChoiceField(queryset=Document.objects.all(), required=True)
@@ -113,3 +74,12 @@ class AssignTaskForm(forms.Form):
                 self.fields['sub_section'].queryset = Subsection.objects.filter(section_id=section_id)
             except (ValueError, TypeError):
                 pass
+
+class TaskEditForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ["color", "comments"]
+        widgets = {
+            "color": forms.Select(attrs={"class": "form-control"}),
+            "comments": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+        }
