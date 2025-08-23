@@ -1,0 +1,39 @@
+.task-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.task-table th, .task-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+.task-table th {
+    background-color: #343a40;
+    color: white;
+}
+
+.task-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.task-table tr:hover {
+    background-color: #e9ecef;
+}
+
+.filter-form {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.filter-form select {
+    padding: 5px;
+}
+
+.filter-form button {
+    padding: 6px 12px;
+}

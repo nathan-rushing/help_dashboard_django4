@@ -4,7 +4,21 @@ from . import views
 app_name = 'online_help'
 
 urlpatterns = [
+    # home_test
     path("home_test/", views.home_test, name="home_test"),
+    path("dash_per_user/<int:writer_pk>/", views.dash_per_user, name="dash_per_user"),
+    path("view_subsection/<int:subsection_id>/", views.view_subsection, name="view_subsection"),
+    path("view_subsection_edit/<int:subsection_id>/edit/", views.view_subsection_edit, name="view_subsection_edit"),
+
+    # Version for home_test
+    path('update-version/', views.update_version, name='update_version'),
+    path('verify-password/', views.verify_password, name='verify_password'),
+
+    # login and logout
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+
+    # tasks_test
     path("tasks_test/", views.tasks_test, name="tasks_test"),
     path("document_list/", views.document_list, name="document_list"),
     path("documents_list_edit/edit/", views.document_list_edit, name="document_list_edit"),
@@ -22,14 +36,14 @@ urlpatterns = [
     path("edit_sme/<int:sme_id>/", views.edit_sme, name="edit_sme"),
     path("add_sme/<int:subsection_id>/", views.add_sme, name="add_sme"),
     path("assign_task/", views.assign_task, name="assign_task"),
-    # AJAX endpoints for assign_task
+
+    # AJAX endpoints for assign_task in tasks_test
     path('ajax/load-sections/', views.load_sections, name='ajax_load_sections'),
-    path('ajax/load-subsections/', views.load_subsections, name='ajax_load_subsections'),
-    path("view_subsection/<int:subsection_id>/", views.view_subsection, name="view_subsection"),
-    path("view_subsection/<int:subsection_id>/edit/", views.view_subsection_edit, name="view_subsection_edit"),
-    
-    path('update-version/', views.update_version, name='update_version'),
-    path('verify-password/', views.verify_password, name='verify_password'),
-    path('login/', views.login_view, name='login'),
-    path('logout/', views.logout_view, name='logout'),
+    path('ajax/load-subsections/', views.load_subsections, name='ajax_load_subsections'),    
+
+    # All tasks
+    path("view_all/", views.view_all, name="view_all"),
+
+    # Export to Excel
+    path('export_excel/', views.export_excel, name='export_excel'),
 ]

@@ -20,7 +20,7 @@
 
   <!-- Download Excel Button -->
   <div>
-    <a href="" class="btn btn-success">
+    <a href="{% url 'online_help:export_excel' %}" class="btn btn-success">
       📥 Download Excel
     </a>
   </div>
@@ -56,7 +56,7 @@
                 <div class="bg-light rounded scroll-box shadow-sm">
                   <div class="p-3 text-white text-center {{ writer_color_classes|get_item:writer.pk }}">
                         <p class="m-0">
-                            <a href="" class="hover-link">{{ writer.name }}</a>
+                            <a href="{% url 'online_help:dash_per_user' writer.pk %}" class="hover-link">{{ writer.name }}</a>
                         </p>
                     </div>
                     <div class="p-2">

@@ -1,0 +1,143 @@
+{% extends "online_help/base.html" %}
+{% block content %}
+{% load static %}
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
+
+<div class="col-md-12">
+  <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+    <h3 class="m-0">{{ writer.name }}</h3>
+  </div>
+
+  <div class="p-3" style="position: sticky; top: 30px; z-index: 1000;">
+    <input type="text" id="searchInput" class="form-control" placeholder="Search sections or subsections..." onkeyup="filterContent()">
+  </div>
+
+  <p><a href="{% url 'online_help:home_test' %}">← Back to Home</a></p>
+
+  <div class="row">
+    <div class="col-md-6 d-flex">
+      <div class="card shadow-sm mb-4 w-100 h-75">
+        <div class="card-body">
+          <h3 class="card-title">Task Summary by Color</h3>
+          <p><strong>Total Tasks:</strong> {{ total_tasks }}</p>
+          <ul class="list-group list-group-flush">
+            {% for color, count in color_counts.items %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><strong>{{ color|default:"No Color" }}:</strong></span>
+                <span class="badge badge-pill badge-primary">{{ count }} task{{ count|pluralize }}</span>
+              </li>
+            {% empty %}
+              <li class="list-group-item">No tasks.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 d-flex">
+      <div class="card shadow-sm mb-4 w-100 h-100">
+        <div class="card-body">
+          <h3 class="card-title">Task Distribution by Document</h3>
+          <canvas id="documentPieChart" width="400" height="400"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-2">
+    {% if grouped_tasks %}
+      {% for document, tasks in grouped_tasks.items %}
+        <h5>{{ document }}</h5>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #444;">
+          <thead style="color: #2a4d9b; background-color: #f2f2f2;">
+            <tr>
+              <th style="border: 1px solid #444; padding: 8px; text-align: left;">Section</th>
+              <th style="border: 1px solid #444; padding: 8px; text-align: left;">Sub</th>
+              <th style="border: 1px solid #444; padding: 8px; text-align: left;">Color</th>
+              <th style="border: 1px solid #444; padding: 8px; text-align: left;">Completion</th>
+              <th style="border: 1px solid #444; padding: 8px; text-align: left;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tk in tasks %}
+              <tr>
+                <td style="border: 1px solid #444; padding: 8px;">{{ tk.subsection.section.name }}</td>
+                <td style="border: 1px solid #444; padding: 8px;">
+                  <a href="{% url 'online_help:view_subsection' tk.subsection.id %}" class="hover-link">
+                    {{ tk.subsection.name }}
+                  </a>
+                </td>
+                <td style="border: 1px solid #444; padding: 8px; background-color: {{ tk.color }};">
+                  {{ tk.color }}
+                </td>
+                <td style="border: 1px solid #444; padding: 8px;">{{ tk.completion }}</td>
+                <td style="border: 1px solid #444; padding: 8px;">
+                  <a href="{% url 'online_help:view_subsection_edit' tk.subsection.id %}">Edit</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endfor %}
+    {% else %}
+      <p>No tasks for this writer.</p>
+    {% endif %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const documentTaskCounts = JSON.parse('{{ document_task_counts_json|escapejs }}');
+  const labels = Object.keys(documentTaskCounts);
+  const data = Object.values(documentTaskCounts);
+
+  const ctx = document.getElementById('documentPieChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Tasks per Document',
+        data: data,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        title: { display: true, text: 'Number of Tasks per Document' }
+      }
+    }
+  });
+</script>
+
+<script>
+function filterContent() {
+  const input = document.getElementById("searchInput").value.toLowerCase();
+  const headings = document.querySelectorAll("h5");
+  const tables = document.querySelectorAll("table");
+
+  headings.forEach((heading, index) => {
+    const table = tables[index];
+    const rows = table.querySelectorAll("tbody tr");
+    let tableHasMatch = false;
+
+    const headingMatch = heading.innerText.toLowerCase().includes(input);
+
+    rows.forEach(row => {
+      const section = row.cells[0].textContent.toLowerCase();
+      const sub = row.cells[1].textContent.toLowerCase();
+      const match = section.includes(input) || sub.includes(input);
+      row.style.display = match ? "" : "none";
+      if (match) tableHasMatch = true;
+    });
+
+    heading.style.display = headingMatch || tableHasMatch ? "" : "none";
+    table.style.display = tableHasMatch ? "" : "none";
+  });
+}
+</script>
+{% endblock %}

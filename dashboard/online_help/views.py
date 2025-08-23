@@ -106,6 +106,50 @@ def home_test(request):
     }
     return render(request, 'online_help/home_test.html', ctx)
 
+from collections import defaultdict
+from django.db.models import Count
+from django.shortcuts import get_object_or_404
+import json
+
+@login_required
+def dash_per_user(request, writer_pk):
+    writer = get_object_or_404(Writer, pk=writer_pk)
+
+    tasks = (
+        Task.objects
+        .filter(writer=writer)
+        .select_related('subsection__section__document')
+        .order_by('subsection__section__document__name',
+                  'subsection__section__name',
+                  'subsection__name')
+    )
+
+    # Group tasks by Document name
+    grouped = defaultdict(list)
+    for tk in tasks:
+        doc_name = tk.subsection.section.document.name
+        grouped[doc_name].append(tk)
+
+    # Counts by color
+    color_counts_qs = tasks.values('color').annotate(count=Count('id'))
+    color_counts = {row['color'] or 'No Color': row['count'] for row in color_counts_qs}
+
+    # Counts by document (for the pie chart)
+    doc_counts_qs = tasks.values('subsection__section__document__name').annotate(count=Count('id'))
+    document_task_counts = {
+        row['subsection__section__document__name'] or 'No Document': row['count']
+        for row in doc_counts_qs
+    }
+
+    return render(request, 'online_help/dash_per_user.html', {
+        'writer': writer,
+        'grouped_tasks': dict(grouped),
+        'color_counts': color_counts,
+        'total_tasks': tasks.count(),
+        'document_task_counts_json': json.dumps(document_task_counts),
+    })
+
+
 @login_required
 def view_subsection(request, subsection_id):
     task = get_object_or_404(Task, subsection_id=subsection_id)
@@ -452,3 +496,102 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('online_help:login')
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import Task
+
+from django.shortcuts import render
+from .models import Task, Document
+
+from .models import Task, Document, Writer
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import Task, Document, Writer
+
+@login_required
+def view_all(request):
+    document_filter = request.GET.get('document')
+    color_filter = request.GET.get('color')
+    writer_filter = request.GET.get('writer')
+
+    # ✅ Initialize tasks first
+    tasks = Task.objects.select_related(
+        'writer', 'sme', 'subsection__section__document'
+    ).all()
+
+    # ✅ Apply filters safely
+    if document_filter:
+        tasks = tasks.filter(subsection__section__document__id=document_filter)
+
+    if color_filter:
+        tasks = tasks.filter(color=color_filter)
+
+    if writer_filter == "unassigned":
+        tasks = tasks.filter(writer__isnull=True)
+    elif writer_filter:
+        tasks = tasks.filter(writer__id=writer_filter)
+
+    # ✅ Prepare dropdown data
+    documents = Document.objects.all()
+    writers = Writer.objects.all()
+    colors = [choice[0] for choice in Task.COLOR_CHOICES]
+
+    return render(request, 'online_help/view_all.html', {
+        'tasks': tasks,
+        'documents': documents,
+        'writers': writers,
+        'colors': colors,
+        'selected_document': document_filter,
+        'selected_color': color_filter,
+        'selected_writer': writer_filter,
+    })
+
+
+import openpyxl
+from openpyxl.styles import Font
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from .models import Document
+
+@login_required
+def export_excel(request):
+    # Create a workbook and sheet
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Tasks Overview"
+
+    # Header row
+    headers = [
+        "Document", "Section", "Subsection", "Task Color", "Completion",
+        "Writer", "SME", "Comments"
+    ]
+    ws.append(headers)
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+
+    # Populate rows
+    for document in Document.objects.prefetch_related("sections__subsections__tasks"):
+        for section in document.sections.all():
+            for subsection in section.subsections.all():
+                for task in subsection.tasks.all():
+                    ws.append([
+                        document.name,
+                        section.name,
+                        subsection.name,
+                        task.color,
+                        task.completion,
+                        task.writer.name if task.writer else "",
+                        task.sme.name if task.sme else "",
+                        task.comments or ""
+                    ])
+
+    # Prepare response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="tasks_export.xlsx"'
+    wb.save(response)
+    return response

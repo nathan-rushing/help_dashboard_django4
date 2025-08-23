@@ -1,0 +1,78 @@
+{% extends 'online_help/base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/view_all.css' %}">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+<h1>All Tasks</h1>
+
+<form method="get" class="filter-form">
+    <label for="document">Filter by Document:</label>
+    <select name="document" id="document">
+        <option value="">All</option>
+        {% for doc in documents %}
+            <option value="{{ doc.id }}" {% if doc.id|stringformat:"s" == selected_document %}selected{% endif %}>
+                {{ doc.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <label for="color">Filter by Color:</label>
+    <select name="color" id="color">
+        <option value="">All</option>
+        {% for color in colors %}
+            <option value="{{ color }}" {% if color == selected_color %}selected{% endif %}>
+                {{ color|title }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <label for="writer">Filter by Writer:</label>
+    <select name="writer" id="writer">
+        <option value="">All</option>
+        <option value="unassigned" {% if selected_writer == "unassigned" %}selected{% endif %}>Unassigned</option>
+        {% for writer in writers %}
+            <option value="{{ writer.id }}" {% if writer.id|stringformat:"s" == selected_writer %}selected{% endif %}>
+                {{ writer.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+
+    <button type="submit" class="btn btn-primary">Apply Filters</button>
+
+</form>
+
+
+<table class="task-table">
+    <thead>
+        <tr>
+            <th>Document</th>
+            <th>Section</th>
+            <th>Subsection</th>
+            <th>Completion</th>
+            <th>Writer</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+            <tr>
+                <td>{{ task.subsection.section.document.name }}</td>
+                <td>{{ task.subsection.section.name }}</td>
+                <td>
+                    <a href="{% url 'online_help:view_subsection' task.subsection.id %}" class="hover-link">
+                        {{ task.subsection.name }}
+                    </a>
+                </td>
+                <td>{{ task.completion }}</td>
+                <td>{{ task.writer.name }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="5">No tasks found.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
+{% endblock %}

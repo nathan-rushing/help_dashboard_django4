@@ -2,3 +2,4 @@ Django
 django-pandas
 openpyxl
 pandas
+django-widget-tweaks
