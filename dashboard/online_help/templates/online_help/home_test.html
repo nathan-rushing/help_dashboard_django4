@@ -8,6 +8,15 @@
 <!-- Flex container for Version and Download Excel -->
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
 
+  <!-- Version Info -->
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <h5>Version:</h5>
+    <h5 id="version-text">{{ version.number }}</h5>
+    <input type="text" id="version-input" style="display: none; width: 80px;" />
+    {% if can_edit %}
+      <button class="btn btn-outline-dark btn-sm" onclick="toggleEdit()">Edit</button>
+    {% endif %}
+  </div>
 
   <!-- Download Excel Button -->
   <div>
@@ -16,6 +25,24 @@
     </a>
   </div>
 
+</div>
+
+<!-- Password Modal -->
+<div class="modal" id="passwordModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Identity</h5>
+      </div>
+      <div class="modal-body">
+        <input type="password" id="confirm-password" class="form-control" placeholder="Enter your password" />
+        <div id="auth-error" style="color: red; display: none;">Invalid password</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="confirmPassword()">Confirm</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="p-3" style="position: sticky; top: 30px; z-index: 1000;">
@@ -55,7 +82,7 @@
                                                             {{ tk.subsection.name }}
                                                         </a>
                                                     </td>
-                                                    <td style="background-color: {{ tk.color }}; ">{{ tk.subsection.completion }}</td>
+                                                    <td style="background-color: {{ tk.color }}; ">{{ tk.completion }}</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -71,6 +98,84 @@
         {% endfor %}
     </div>
 </div>
+
+<script>
+  let editing = false;
+
+  function toggleEdit() {
+    if (!editing) {
+      const modal = new bootstrap.Modal(document.getElementById('passwordModal'));
+      modal.show();
+    } else {
+      saveVersion();
+    }
+  }
+
+  function confirmPassword() {
+    const password = document.getElementById('confirm-password').value;
+
+    fetch("{% url 'online_help:verify_password' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: `password=${encodeURIComponent(password)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        document.getElementById('auth-error').style.display = 'none';
+        const modal = bootstrap.Modal.getInstance(document.getElementById('passwordModal'));
+        modal.hide();
+        enableEditing();
+      } else {
+        document.getElementById('auth-error').style.display = 'block';
+      }
+    });
+  }
+
+  function enableEditing() {
+    const versionText = document.getElementById('version-text');
+    const versionInput = document.getElementById('version-input');
+    const button = document.querySelector('button[onclick="toggleEdit()"]');
+
+    versionInput.value = versionText.textContent;
+    versionText.style.display = 'none';
+    versionInput.style.display = 'inline-block';
+    button.textContent = 'Save';
+    editing = true;
+  }
+
+  function saveVersion() {
+    const versionText = document.getElementById('version-text');
+    const versionInput = document.getElementById('version-input');
+    const button = document.querySelector('button[onclick="toggleEdit()"]');
+    const newVersion = versionInput.value;
+
+    fetch("{% url 'online_help:update_version' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: `version=${encodeURIComponent(newVersion)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        versionText.textContent = data.version;
+      } else {
+        alert(data.message);
+      }
+    });
+
+    versionText.style.display = 'inline-block';
+    versionInput.style.display = 'none';
+    button.textContent = 'Edit';
+    editing = false;
+  }
+</script>
 
 
 <script>

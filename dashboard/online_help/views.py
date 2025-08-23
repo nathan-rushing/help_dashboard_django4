@@ -27,9 +27,50 @@ from django.db.models.functions import Coalesce
 
 # views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Task
+from .models import Task, Version
 from .forms import AssignTaskForm
 
+from collections import defaultdict, Counter
+import json
+import math
+import pandas as pd
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse, JsonResponse
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.http import require_POST
+from django.db.models import Prefetch, F, Value, CharField
+from django.db.models.functions import Coalesce
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Task
+from .forms import TaskEditForm
+from django.shortcuts import render, get_object_or_404
+from .models import Task
+@require_POST
+@login_required
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def update_version(request):
+    new_version = request.POST.get('version')
+    if new_version:
+        version_obj, _ = Version.objects.get_or_create(id=1)
+        version_obj.number = new_version
+        version_obj.save()
+        return JsonResponse({'status': 'success', 'version': new_version})
+    return JsonResponse({'status': 'error', 'message': 'No version provided'}, status=400)
+
+@require_POST
+@login_required
+def verify_password(request):
+    password = request.POST.get('password')
+    user = authenticate(username=request.user.username, password=password)
+    if user:
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid password'}, status=403)
+
+@login_required
 def home_test(request):
     writers = Writer.objects.annotate(
         sort_name=Coalesce('name', Value('zzz'))
@@ -54,16 +95,18 @@ def home_test(request):
                 grouped_by_doc[document].append(task)
         writer_tasks_grouped[writer.pk] = dict(grouped_by_doc)
 
+    version = Version.objects.first()
+
     ctx = {
         'writers': writers,
         'writer_tasks_grouped': writer_tasks_grouped,
         'writer_color_classes': writer_color_classes,
+        'version': version,
+        'can_edit': request.user.is_authenticated and (request.user.is_superuser or request.user.is_staff),
     }
     return render(request, 'online_help/home_test.html', ctx)
 
-from django.shortcuts import render, get_object_or_404
-from .models import Task
-
+@login_required
 def view_subsection(request, subsection_id):
     task = get_object_or_404(Task, subsection_id=subsection_id)
 
@@ -74,15 +117,12 @@ def view_subsection(request, subsection_id):
         "color": task.color,
         "comments": task.comments,
         "sme": task.sme.name if task.sme else "Unassigned",
-        "completion": getattr(task.subsection, "completion", "N/A"),
+        "completion": task.completion,
         "task_id": subsection_id,
     }
     return render(request, "online_help/view_subsection.html", context)
 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Task
-from .forms import TaskEditForm
-
+@login_required
 def view_subsection_edit(request, subsection_id):
     task = get_object_or_404(Task, subsection_id=subsection_id)
 
@@ -100,6 +140,7 @@ def view_subsection_edit(request, subsection_id):
     })
 
 
+@login_required
 def tasks_test(request):
     tasks = Task.objects.select_related("subsection__section__document", "writer").all()
     grouped_tasks = defaultdict(list)
@@ -111,12 +152,14 @@ def tasks_test(request):
 
 
 
+@login_required
 def document_list(request):
     documents = Document.objects.all()
     return render(request, 
                   "online_help/document_list.html", 
                   {"documents": documents})
 
+@login_required
 def document_list_edit(request):
     documents = Document.objects.all()
     form = DocumentForm(request.POST or None)
@@ -131,6 +174,7 @@ def document_list_edit(request):
     })
 
 
+@login_required
 def document_rename(request, pk):
     document = get_object_or_404(Document, pk=pk)
     if request.method == "POST":
@@ -143,6 +187,7 @@ def document_rename(request, pk):
     return render(request, "online_help/document_rename.html", {"form": form, "document": document})
 
 
+@login_required
 def document_remove(request, pk):
     document = get_object_or_404(Document, pk=pk)
     if request.method == "POST":
@@ -151,6 +196,7 @@ def document_remove(request, pk):
     return render(request, "online_help/document_confirm_delete.html", {"document": document})
 
 
+@login_required
 def document_sections(request, document_id):
     document = get_object_or_404(Document, id=document_id)
     sections = document.sections.all()  # uses related_name="sections"
@@ -159,6 +205,7 @@ def document_sections(request, document_id):
                   {"document": document, 
                    "sections": sections})
 
+@login_required
 def document_sections_edit(request, document_id):
     document = get_object_or_404(Document, id=document_id)
     sections = document.sections.all()  
@@ -180,6 +227,7 @@ def document_sections_edit(request, document_id):
                    "form": form})
 
 
+@login_required
 def section_rename(request, section_id):
     section = get_object_or_404(Section, id=section_id)
     if request.method == "POST":
@@ -193,12 +241,14 @@ def section_rename(request, section_id):
     return render(request, "online_help/section_rename.html", {"form": form, "section": section})
 
 
+@login_required
 def section_delete(request, section_id):
     section = get_object_or_404(Section, id=section_id)
     document_id = section.document.id
     section.delete()
     return redirect("online_help:document_sections_edit", document_id=document_id)
 
+@login_required
 def section_subsections(request, section_id):
     section = get_object_or_404(Section, id=section_id)
     subsections = section.subsections.all()  # uses related_name="subsections"
@@ -207,6 +257,7 @@ def section_subsections(request, section_id):
                   {"section": section, 
                    "subsections": subsections})
 
+@login_required
 def section_subsections_edit(request, section_id):
     section = get_object_or_404(Section, id=section_id)
     subsections = section.subsections.all()
@@ -236,6 +287,7 @@ def section_subsections_edit(request, section_id):
     )
 
 
+@login_required
 def subsection_rename(request, subsection_id):
     subsection = get_object_or_404(Subsection, id=subsection_id)
     section = subsection.section
@@ -255,7 +307,7 @@ def subsection_rename(request, subsection_id):
     )
 
 
-# views.py
+@login_required
 def subsection_details(request, subsection_id):
     subsection = get_object_or_404(Subsection, id=subsection_id)
     tasks = Task.objects.filter(subsection=subsection)
@@ -286,6 +338,7 @@ def subsection_details(request, subsection_id):
 
 
 @require_POST
+@login_required
 def edit_sme(request, sme_id):
     """
     Rename an existing SME (global), then redirect back to the page the user came from.
@@ -311,6 +364,7 @@ def edit_sme(request, sme_id):
 
 
 @require_POST
+@login_required
 def add_sme(request, subsection_id):
     """
     Create (or get) an SME by name and assign it to tasks under the given subsection.
@@ -332,6 +386,7 @@ def add_sme(request, subsection_id):
     return redirect("online_help:subsection_details", subsection_id=subsection.id)
 
 
+@login_required
 def assign_task(request):
     if request.method == 'POST':
         form = AssignTaskForm(request.POST)
@@ -365,13 +420,35 @@ def assign_task(request):
     return render(request, 'online_help/assign_task.html', {'form': form})
 
 # For assign_task AJAX functionality
+@login_required
 def load_sections(request):
     document_id = request.GET.get('document')
     sections = Section.objects.filter(document_id=document_id).values("id", "name")
     return JsonResponse(list(sections), safe=False)
 
+@login_required
 def load_subsections(request):
     section_id = request.GET.get('section')
     subsections = Subsection.objects.filter(section_id=section_id).values("id", "name")
     return JsonResponse(list(subsections), safe=False)
 
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            next_url = request.GET.get('next') or request.POST.get('next') or 'online_help:home_test'
+            return redirect(next_url)
+        else:
+            messages.error(request, 'Invalid username or password.')
+
+    next_url = request.GET.get('next', '')
+    return render(request, 'online_help/login.html', {'next': next_url})
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('online_help:login')

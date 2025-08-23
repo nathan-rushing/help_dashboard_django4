@@ -19,6 +19,19 @@
                 </li>
             </ul>
 
+            <!-- Right-aligned section for Logout/Login -->
+            <ul class="navbar-nav ml-auto"> <!-- "ml-auto" aligns this to the right -->
+                {% if request.user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'online_help:logout' %}">Logout</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'online_help:login' %}">Login</a>
+                    </li>
+                {% endif %}
+            </ul>
+
         </div>
     </div>
 </nav>

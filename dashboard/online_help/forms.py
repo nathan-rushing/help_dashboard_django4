@@ -55,7 +55,7 @@ class AssignTaskForm(forms.Form):
     section = forms.ModelChoiceField(queryset=Section.objects.none(), required=True)
     sub_section = forms.ModelChoiceField(queryset=Subsection.objects.none(), required=True)
     writer = forms.ModelChoiceField(queryset=Writer.objects.all(), required=True)
-    sme = forms.ModelChoiceField(queryset=SME.objects.all(), required=False)
+    # sme = forms.ModelChoiceField(queryset=SME.objects.all(), required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,8 +78,9 @@ class AssignTaskForm(forms.Form):
 class TaskEditForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ["color", "comments"]
+        fields = ["color", "comments", "completion"]
         widgets = {
             "color": forms.Select(attrs={"class": "form-control"}),
-            "comments": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "comments": forms.Textarea(attrs={"class": "form-control", "rows": 8}),
+            "completion": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. 50%"}),
         }

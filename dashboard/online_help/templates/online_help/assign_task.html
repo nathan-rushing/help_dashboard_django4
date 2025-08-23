@@ -1,60 +1,70 @@
 {% extends "online_help/base.html" %}
 {% load static %}
+{% load widget_tweaks %}
+
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
-<h3>Assign Writer to Task</h3>
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark">
+            <h3 class="mb-0">Assign Writer to Task</h3>
+        </div>
+        <div class="card-body">
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
 
-{% if form.errors %}
-<div class="alert alert-danger">
-    <ul>
-        {% for field in form %}
-            {% for error in field.errors %}
-                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-            {% endfor %}
-        {% endfor %}
-        {% for error in form.non_field_errors %}
-            <li>{{ error }}</li>
-        {% endfor %}
-    </ul>
+            <form method="post" id="assignForm">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    {{ form.document.label_tag }}
+                    {{ form.document|add_class:"form-control form-control-lg" }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.section.label_tag }}
+                    <select name="section" id="id_section" class="form-control form-control-lg">
+                        <option value="">Select section</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    {{ form.sub_section.label_tag }}
+                    <select name="sub_section" id="id_sub_section" class="form-control form-control-lg">
+                        <option value="">Select subsection</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    {{ form.writer.label_tag }}
+                    {{ form.writer|add_class:"form-control form-control-lg" }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.sme.label_tag }}
+                    {{ form.sme|add_class:"form-control form-control-lg" }}
+                </div>
+
+                <button type="submit" class="btn btn-dark btn-lg">Submit</button>
+            </form>
+        </div>
+    </div>
 </div>
-{% endif %}
-
-<form method="post" id="assignForm">
-    {% csrf_token %}
-    <div class="form-group">
-        {{ form.document.label_tag }}
-        {{ form.document }}
-    </div>
-
-    <div class="form-group">
-        {{ form.section.label_tag }}
-        <select name="section" id="id_section" class="form-control">
-            <option value="">Select section</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        {{ form.sub_section.label_tag }}
-        <select name="sub_section" id="id_sub_section" class="form-control">
-            <option value="">Select subsection</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        {{ form.writer.label_tag }}
-        {{ form.writer }}
-    </div>
-
-    <div class="form-group">
-        {{ form.sme.label_tag }}
-        {{ form.sme }}
-    </div>
-
-    <button type="submit" class="btn btn-outline-dark btn-sm">Submit</button>
-</form>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -86,6 +96,5 @@ $("#id_section").change(function () {
         }
     });
 });
-
 </script>
 {% endblock %}

@@ -27,4 +27,9 @@ urlpatterns = [
     path('ajax/load-subsections/', views.load_subsections, name='ajax_load_subsections'),
     path("view_subsection/<int:subsection_id>/", views.view_subsection, name="view_subsection"),
     path("view_subsection/<int:subsection_id>/edit/", views.view_subsection_edit, name="view_subsection_edit"),
+    
+    path('update-version/', views.update_version, name='update_version'),
+    path('verify-password/', views.verify_password, name='verify_password'),
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
 ]

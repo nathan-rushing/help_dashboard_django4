@@ -41,25 +41,25 @@ class SME(models.Model):
 
 class Task(models.Model):
     COLOR_CHOICES = [
-        ("green", "Green - Ready for QA"),
-        ("yellow", "Yellow - In Progress"),
-        ("grey", "Grey - Not Needed"),
-        ("white", "White - No Changes"),
-        ("orange", "Orange - Pushed to Next Release"),
+        ("green", "Green"),
+        ("yellow", "Yellow"),
+        ("grey", "Grey"),
+        ("white", "White"),
+        ("orange", "Orange"),
     ]
     subsection = models.ForeignKey(Subsection, on_delete=models.CASCADE, related_name="tasks")
     writer = models.ForeignKey(Writer, on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
     sme = models.ForeignKey("SME", on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
     comments = models.TextField(blank=True, null=True)
     color = models.CharField(max_length=20, choices=COLOR_CHOICES, default="white")
-    # completion = models.CharField(max_length=20, choices=COLOR_CHOICES, default="0%")
+    completion = models.CharField(max_length=20, default="0%")
 
     def __str__(self):
         return f"Task: {self.subsection.name} ({self.writer.name if self.writer else 'Unassigned'})"
 
-# class Version(models.Model):
-#     number = models.CharField(max_length=20)
-#     updated_at = models.DateTimeField(auto_now=True)
+class Version(models.Model):
+    number = models.CharField(max_length=20)
+    updated_at = models.DateTimeField(auto_now=True)
 
-#     def __str__(self):
-#         return self.number
+    def __str__(self):
+        return self.number

@@ -28,12 +28,6 @@
                 <p class="font-weight-bold">{{ task.subsection.section.name }}</p>
             </div>
 
-            <!-- Subsection -->
-            <div class="mb-3">
-                <h5 class="text-muted">Subsection</h5>
-                <p class="font-weight-bold">{{ task.subsection.name }}</p>
-            </div>
-
             <!-- SME -->
             <div class="mb-3">
             <h5 class="text-muted">SME</h5>
@@ -47,6 +41,10 @@
             <!-- Editable fields -->
             <form method="post">
                 {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_completion">Completion</label>
+                    {{ form.completion }}
+                </div>
                 <div class="form-group">
                     <label for="id_color">Color</label>
                     {{ form.color }}

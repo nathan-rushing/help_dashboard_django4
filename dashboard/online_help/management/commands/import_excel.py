@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         excel_path = os.path.join(
-            settings.BASE_DIR,  # help_dashboard_django4/
+            settings.BASE_DIR,
             "online_help", "management", "dataset",
             "Radiant_2025.1_help_assignments_v3_cleaned.xlsx"
         )
@@ -24,12 +24,14 @@ class Command(BaseCommand):
             sub_name = str(row.get("Sub-sections")).strip()
             writer_name = str(row.get("Writer")).strip()
             comments = row.get("Comments")
+
             sme_name = str(row.get("Subject Matter Expert/Engineering")).strip() if pd.notna(row.get("Subject Matter Expert/Engineering")) else None
             sme = None
             if sme_name:
                 sme, _ = SME.objects.get_or_create(name=sme_name)
 
             color = str(row.get("color")).lower().strip() if row.get("color") else "white"
+            completion = str(row.get("completion")).strip() if pd.notna(row.get("completion")) else "0%"
 
             if not doc_name or not sec_name or not sub_name:
                 continue
@@ -45,12 +47,20 @@ class Command(BaseCommand):
             task, created = Task.objects.get_or_create(
                 subsection=subsection,
                 writer=writer,
-                sme=sme,   # ✅ now foreign key
+                sme=sme,
                 defaults={
                     "comments": comments if pd.notna(comments) else "",
                     "color": color,
+                    "completion": completion,
                 },
             )
+
+            # ✅ Update existing tasks with new info
+            if not created:
+                task.comments = comments if pd.notna(comments) else task.comments
+                task.color = color or task.color
+                task.completion = completion or task.completion
+                task.save()
 
             if created:
                 imported_count += 1
