@@ -6,7 +6,11 @@
 <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 
 <div class="container mt-5">
-    <p><a href="{% url 'online_help:view_subsection' task.subsection.id %}">← Back to Details</a></p>
+    <p>
+    <a href="{% url 'online_help:view_subsection' subsection.id %}{% if writer_id %}?writer={{ writer_id }}{% endif %}">
+        ← Back to Details
+    </a>
+    </p>
     <div class="card shadow-sm">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h2 class="mb-0">Edit Subsection - {{ task.subsection.name }}</h2>
@@ -16,10 +20,10 @@
             <!-- Non-editable details -->
             <!-- Writer -->
             <div class="mb-3">
-            <h5 class="text-muted">Writer</h5>
-            <p class="font-weight-bold">
-                {% if task.writer %}{{ task.writer.name }}{% else %}Unassigned{% endif %}
-            </p>
+                <h5 class="text-muted">Writer</h5>
+                <p class="font-weight-bold">
+                    {% if task.writer %}{{ task.writer.name }}{% else %}Unassigned{% endif %}
+                </p>
             </div>
 
             <!-- Section -->
@@ -30,10 +34,10 @@
 
             <!-- SME -->
             <div class="mb-3">
-            <h5 class="text-muted">SME</h5>
-            <p class="font-weight-bold">
-                {% if task.sme %}{{ task.sme.name }}{% else %}Unassigned{% endif %}
-            </p>
+                <h5 class="text-muted">SME</h5>
+                <p class="font-weight-bold">
+                    {% if task.sme %}{{ task.sme.name }}{% else %}Unassigned{% endif %}
+                </p>
             </div>
 
             <hr>
@@ -43,18 +47,22 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="id_completion">Completion</label>
-                    {{ form.completion }}
+                    {{ subsection_form.completion }}
                 </div>
                 <div class="form-group">
                     <label for="id_color">Color</label>
-                    {{ form.color }}
+                    {{ subsection_form.color }}
                 </div>
                 <div class="form-group">
                     <label for="id_comments">Comments</label>
-                    {{ form.comments }}
+                    {{ subsection_form.comments }}
                 </div>
+
                 <button type="submit" class="btn btn-success">Save Changes</button>
-                <a href="{% url 'online_help:view_subsection' task.subsection.id %}" class="btn btn-secondary">Cancel</a>
+                <a href="{% url 'online_help:view_subsection' subsection.id %}{% if writer_id %}?writer={{ writer_id }}{% endif %}" 
+                class="btn btn-secondary">
+                    Cancel
+                </a>
             </form>
         </div>
     </div>

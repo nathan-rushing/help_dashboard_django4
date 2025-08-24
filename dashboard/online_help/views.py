@@ -1,7 +1,6 @@
-from collections import defaultdict, Counter
 import json
 import math
-import pandas as pd
+from collections import defaultdict, Counter
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
@@ -9,46 +8,20 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.http import require_POST
-from django.db.models import Prefetch, F, Value, CharField, Q
+from django.urls import reverse
+from django.db.models import Count, Value, Q
 from django.db.models.functions import Coalesce
+
+import openpyxl
+from openpyxl.styles import Font
 
 from .models import (
-    Document, Section, Subsection, Writer, Task, SME
+    Document, Section, Subsection, Writer, Task, SME, Version
 )
 from .forms import (
-    DocumentForm, SectionForm, SubsectionForm, TaskForm, WriterAssignForm
+    DocumentForm, SectionForm, SubsectionForm, SubsectionEditForm,
+    TaskForm, WriterAssignForm, AssignTaskForm
 )
-
-from collections import defaultdict
-
-from collections import defaultdict
-from django.db.models import Value
-from django.db.models.functions import Coalesce
-
-# views.py
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Task, Version
-from .forms import AssignTaskForm
-
-from collections import defaultdict, Counter
-import json
-import math
-import pandas as pd
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, JsonResponse
-from django.contrib.auth import authenticate, login, logout
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.views.decorators.http import require_POST
-from django.db.models import Prefetch, F, Value, CharField
-from django.db.models.functions import Coalesce
-
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Task
-from .forms import TaskEditForm
-from django.shortcuts import render, get_object_or_404
-from .models import Task
 @require_POST
 @login_required
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
@@ -106,10 +79,6 @@ def home_test(request):
     }
     return render(request, 'online_help/home_test.html', ctx)
 
-from collections import defaultdict
-from django.db.models import Count
-from django.shortcuts import get_object_or_404
-import json
 
 @login_required
 def dash_per_user(request, writer_pk):
@@ -124,20 +93,32 @@ def dash_per_user(request, writer_pk):
                   'subsection__name')
     )
 
-    # Group tasks by Document name
+    # Group tasks by Document name for the table
     grouped = defaultdict(list)
     for tk in tasks:
         doc_name = tk.subsection.section.document.name
         grouped[doc_name].append(tk)
 
-    # Counts by color
-    color_counts_qs = tasks.values('color').annotate(count=Count('id'))
-    color_counts = {row['color'] or 'No Color': row['count'] for row in color_counts_qs}
+    # ✅ Counts by color (color is on Subsection)
+    # Use distinct subsection IDs in case there are duplicate Task rows for same subsection
+    color_counts_qs = (
+        tasks.values('subsection__color')
+        .annotate(total=Count('subsection_id', distinct=True))
+        .order_by()
+    )
+    color_counts = {
+        (row['subsection__color'] or 'No Color'): row['total']
+        for row in color_counts_qs
+    }
 
-    # Counts by document (for the pie chart)
-    doc_counts_qs = tasks.values('subsection__section__document__name').annotate(count=Count('id'))
+    # ✅ Counts by document for the pie chart (count distinct subsections)
+    doc_counts_qs = (
+        tasks.values('subsection__section__document__name')
+        .annotate(total=Count('subsection_id', distinct=True))
+        .order_by()
+    )
     document_task_counts = {
-        row['subsection__section__document__name'] or 'No Document': row['count']
+        (row['subsection__section__document__name'] or 'No Document'): row['total']
         for row in doc_counts_qs
     }
 
@@ -145,43 +126,77 @@ def dash_per_user(request, writer_pk):
         'writer': writer,
         'grouped_tasks': dict(grouped),
         'color_counts': color_counts,
-        'total_tasks': tasks.count(),
+        'total_tasks': tasks.values('subsection_id').distinct().count(),  # distinct subsections
         'document_task_counts_json': json.dumps(document_task_counts),
     })
 
+@login_required
+def tasks_by_color(request, writer_pk, color):
+    writer = get_object_or_404(Writer, pk=writer_pk)
+
+    tasks = (
+        Task.objects
+        .filter(writer=writer)
+        .select_related('subsection__section__document')
+    )
+
+    if color != "No Color":
+        tasks = tasks.filter(subsection__color=color)
+    else:
+        tasks = tasks.filter(subsection__color__isnull=True)
+
+    return render(request, 'online_help/tasks_by_color.html', {
+        'writer': writer,
+        'color': color,
+        'tasks': tasks,
+    })
 
 @login_required
 def view_subsection(request, subsection_id):
-    task = get_object_or_404(Task, subsection_id=subsection_id)
+    subsection = get_object_or_404(Subsection, pk=subsection_id)
 
-    context = {
-        "writer": task.writer.name if task.writer else "Unassigned",
-        "section": task.subsection.section.name,
-        "subsection": task.subsection.name,
-        "color": task.color,
-        "comments": task.comments,
-        "sme": task.sme.name if task.sme else "Unassigned",
-        "completion": task.completion,
-        "task_id": subsection_id,
-    }
-    return render(request, "online_help/view_subsection.html", context)
+    writer_id = request.GET.get("writer")
+    task = None
+    if writer_id:
+        task = get_object_or_404(Task, subsection=subsection, writer_id=writer_id)
+
+    return render(request, "online_help/view_subsection.html", {
+        "subsection": subsection,
+        "task": task,
+    })
+
 
 @login_required
 def view_subsection_edit(request, subsection_id):
-    task = get_object_or_404(Task, subsection_id=subsection_id)
+    subsection = get_object_or_404(Subsection, pk=subsection_id)
+
+    writer_id = request.GET.get("writer")
+    task = None
+    if writer_id:
+        task = get_object_or_404(Task, subsection=subsection, writer_id=writer_id)
 
     if request.method == "POST":
-        form = TaskEditForm(request.POST, instance=task)
-        if form.is_valid():
-            form.save()
+        subsection_form = SubsectionEditForm(request.POST, instance=subsection)
+
+        if subsection_form.is_valid():
+            subsection_form.save()
+
+            # ✅ Preserve writer param on redirect
+            if writer_id:
+                return redirect(
+                    f"{reverse('online_help:view_subsection', args=[subsection_id])}?writer={writer_id}"
+                )
             return redirect("online_help:view_subsection", subsection_id=subsection_id)
     else:
-        form = TaskEditForm(instance=task)
+        subsection_form = SubsectionEditForm(instance=subsection)
 
     return render(request, "online_help/view_subsection_edit.html", {
-        "form": form,
+        "subsection_form": subsection_form,
         "task": task,
+        "subsection": subsection,
+        "writer_id": writer_id,   # ✅ pass this
     })
+
 
 
 @login_required
@@ -193,7 +208,6 @@ def tasks_test(request):
         grouped_tasks[document].append(task)
 
     return render(request, "online_help/tasks_test.html", {"grouped_tasks": dict(grouped_tasks)})
-
 
 
 @login_required
@@ -330,7 +344,6 @@ def section_subsections_edit(request, section_id):
         {"section": section, "subsections": subsections, "form": form},
     )
 
-
 @login_required
 def subsection_rename(request, subsection_id):
     subsection = get_object_or_404(Subsection, id=subsection_id)
@@ -349,7 +362,6 @@ def subsection_rename(request, subsection_id):
         "online_help/subsection_rename.html",
         {"section": section, "subsection": subsection, "form": form},
     )
-
 
 @login_required
 def subsection_details(request, subsection_id):
@@ -378,8 +390,6 @@ def subsection_details(request, subsection_id):
         "sme_list": sme_list,
         "form": form,
     })
-
-
 
 @require_POST
 @login_required
@@ -440,7 +450,7 @@ def assign_task(request):
             section = form.cleaned_data['section']
             sub_section = form.cleaned_data['sub_section']
             writer = form.cleaned_data['writer']
-            sme = form.cleaned_data['sme']
+            # sme = form.cleaned_data['sme']
 
             # Find task(s) for the given subsection
             task = Task.objects.filter(subsection=sub_section).first()
@@ -450,7 +460,7 @@ def assign_task(request):
             else:
                 # Assign writer and SME to the task
                 task.writer = writer
-                task.sme = sme
+                # task.sme = sme
                 task.save()
 
                 return redirect('online_help:tasks_test')  # Redirect after success
@@ -497,20 +507,6 @@ def logout_view(request):
     logout(request)
     return redirect('online_help:login')
 
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from .models import Task
-
-from django.shortcuts import render
-from .models import Task, Document
-
-from .models import Task, Document, Writer
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from .models import Task, Document, Writer
-
 @login_required
 def view_all(request):
     document_filter = request.GET.get('document')
@@ -527,7 +523,7 @@ def view_all(request):
         tasks = tasks.filter(subsection__section__document__id=document_filter)
 
     if color_filter:
-        tasks = tasks.filter(color=color_filter)
+        tasks = tasks.filter(subsection__color=color_filter)
 
     if writer_filter == "unassigned":
         tasks = tasks.filter(writer__isnull=True)
@@ -537,7 +533,7 @@ def view_all(request):
     # ✅ Prepare dropdown data
     documents = Document.objects.all()
     writers = Writer.objects.all()
-    colors = [choice[0] for choice in Task.COLOR_CHOICES]
+    colors = [choice[0] for choice in Subsection.COLOR_CHOICES]
 
     return render(request, 'online_help/view_all.html', {
         'tasks': tasks,
@@ -548,13 +544,6 @@ def view_all(request):
         'selected_color': color_filter,
         'selected_writer': writer_filter,
     })
-
-
-import openpyxl
-from openpyxl.styles import Font
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
-from .models import Document
 
 @login_required
 def export_excel(request):
@@ -581,11 +570,11 @@ def export_excel(request):
                         document.name,
                         section.name,
                         subsection.name,
-                        task.color,
-                        task.completion,
+                        subsection.color,
+                        subsection.completion,
                         task.writer.name if task.writer else "",
                         task.sme.name if task.sme else "",
-                        task.comments or ""
+                        subsection.comments or ""
                     ])
 
     # Prepare response

@@ -7,6 +7,7 @@ urlpatterns = [
     # home_test
     path("home_test/", views.home_test, name="home_test"),
     path("dash_per_user/<int:writer_pk>/", views.dash_per_user, name="dash_per_user"),
+    path('tasks_by_color/<int:writer_pk>/<str:color>/', views.tasks_by_color, name='tasks_by_color'),
     path("view_subsection/<int:subsection_id>/", views.view_subsection, name="view_subsection"),
     path("view_subsection_edit/<int:subsection_id>/edit/", views.view_subsection_edit, name="view_subsection_edit"),
 

@@ -1,0 +1,55 @@
+.scroll-box {
+    max-height: 300px; /* Adjust as needed */
+    overflow-y: auto;
+}
+
+
+.hover-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.hover-link:hover {
+    color: blue;
+    text-decoration: underline;
+}
+
+#searchInput {
+    margin-bottom: 15px;
+    padding: 8px;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.card {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.card-title {
+    font-weight: 600;
+    color: #2a4d9b;
+}
+
+.list-group-item {
+    font-size: 1rem;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+.badge-pill {
+    font-size: 0.9rem;
+    padding: 0.5em 0.75em;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+}
+
+.badge-pill:hover {
+    background-color: #0056b3;
+}

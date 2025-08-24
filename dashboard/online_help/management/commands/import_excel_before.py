@@ -40,12 +40,6 @@ class Command(BaseCommand):
             section, _ = Section.objects.get_or_create(document=document, name=sec_name)
             subsection, _ = Subsection.objects.get_or_create(section=section, name=sub_name)
 
-            # ✅ Update subsection-level fields (shared across tasks)
-            subsection.color = color
-            subsection.completion = completion
-            subsection.comments = comments if pd.notna(comments) else subsection.comments
-            subsection.save()
-
             writer = None
             if writer_name and writer_name.lower() != "no writer":
                 writer, _ = Writer.objects.get_or_create(name=writer_name)
@@ -54,11 +48,18 @@ class Command(BaseCommand):
                 subsection=subsection,
                 writer=writer,
                 sme=sme,
+                defaults={
+                    "comments": comments if pd.notna(comments) else "",
+                    "color": color,
+                    "completion": completion,
+                },
             )
 
             # ✅ Update existing tasks with new info
             if not created:
-                task.sme = sme or task.sme
+                task.comments = comments if pd.notna(comments) else task.comments
+                task.color = color or task.color
+                task.completion = completion or task.completion
                 task.save()
 
             if created:

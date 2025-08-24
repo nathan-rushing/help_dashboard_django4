@@ -43,6 +43,10 @@
 
 </form>
 
+<div class="p-3" style="position: sticky; top: 30px; z-index: 1000;">
+    <input type="text" id="searchInput" class="form-control" placeholder="Search sections or subsections..." onkeyup="filterContent()">
+</div>
+
 
 <table class="task-table">
     <thead>
@@ -60,12 +64,18 @@
                 <td>{{ task.subsection.section.document.name }}</td>
                 <td>{{ task.subsection.section.name }}</td>
                 <td>
-                    <a href="{% url 'online_help:view_subsection' task.subsection.id %}" class="hover-link">
+                    <a href="{% url 'online_help:view_subsection' task.subsection.id %}?writer={{ task.writer.pk }}" class="hover-link">
                         {{ task.subsection.name }}
                     </a>
                 </td>
-                <td>{{ task.completion }}</td>
-                <td>{{ task.writer.name }}</td>
+                <td>{{ task.subsection.completion }}</td>
+                <td>
+                    {% if task.writer %}
+                        {{ task.writer.name }}
+                    {% else %}
+                        Unassigned
+                    {% endif %}
+                </td>
             </tr>
         {% empty %}
             <tr>
@@ -75,4 +85,24 @@
     </tbody>
 
 </table>
+
+<script>
+function filterContent() {
+  const input = document.getElementById("searchInput").value.toLowerCase();
+  const rows = document.querySelectorAll(".task-table tbody tr");
+
+  rows.forEach(row => {
+    const documentName = row.cells[0].textContent.toLowerCase();
+    const sectionName = row.cells[1].textContent.toLowerCase();
+    const subsectionName = row.cells[2].textContent.toLowerCase();
+    const match =
+      documentName.includes(input) ||
+      sectionName.includes(input) ||
+      subsectionName.includes(input);
+
+    row.style.display = match ? "" : "none";
+  });
+}
+</script>
+
 {% endblock %}

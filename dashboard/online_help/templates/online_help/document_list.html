@@ -1,5 +1,3 @@
-
-
 {% extends "online_help/base.html" %}
 {% block content %}
 {% load static %}
@@ -16,7 +14,11 @@
 
 <p><a href="{% url 'online_help:tasks_test' %}">← Back to Tasks</a></p>
 
-<div class="container mt-5">
+<div class="p-3" style="position: sticky; top: 30px; z-index: 1000;">
+    <input type="text" id="searchInput" class="form-control" placeholder="Search sections or subsections..." onkeyup="filterContent()">
+</div>
+
+<div class="container">
     <div class="card shadow-sm">
         <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
             <h2 class="mb-0">Radiant Documentation</h2>
@@ -40,28 +42,15 @@
 
 <script>
 function filterContent() {
-    const input = document.getElementById("searchInput").value.toLowerCase();
-    const headings = document.querySelectorAll(".scroll-box h5, .scroll-box p");
-    const tables = document.querySelectorAll("table");
+  const input = document.getElementById("searchInput").value.toLowerCase();
+  const headings = document.querySelectorAll(".card-body h5");
 
-    headings.forEach((heading, index) => {
-        const table = tables[index];
-        const rows = table.querySelectorAll("tbody tr");
-        let tableHasMatch = false;
-
-        const headingMatch = heading.innerText.toLowerCase().includes(input);
-
-        rows.forEach(row => {
-            const text = row.innerText.toLowerCase();
-            const match = text.includes(input);
-            row.style.display = match ? "" : "none";
-            if (match) tableHasMatch = true;
-        });
-
-        heading.style.display = headingMatch || tableHasMatch ? "" : "none";
-        table.style.display = tableHasMatch ? "" : "none";
-    });
+  headings.forEach(heading => {
+    const text = heading.textContent.toLowerCase();
+    heading.style.display = text.includes(input) ? "" : "none";
+  });
 }
 </script>
+
 
 {% endblock %}

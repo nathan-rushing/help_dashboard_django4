@@ -75,12 +75,13 @@ class AssignTaskForm(forms.Form):
             except (ValueError, TypeError):
                 pass
 
-class TaskEditForm(forms.ModelForm):
+class SubsectionEditForm(forms.ModelForm):
     class Meta:
-        model = Task
-        fields = ["color", "comments", "completion"]
+        model = Subsection
+        fields = ["color", "completion", "comments"]
         widgets = {
             "color": forms.Select(attrs={"class": "form-control"}),
-            "comments": forms.Textarea(attrs={"class": "form-control", "rows": 8}),
             "completion": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. 50%"}),
+            "comments": forms.Textarea(attrs={"class": "form-control", "rows": 8}),
         }
+

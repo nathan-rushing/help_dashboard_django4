@@ -3,7 +3,7 @@
 {% load static %}
 
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-<link rel="stylesheet" href="{% static 'css/doc_sec_sub_list.css' %}">
+<link rel="stylesheet" href="{% static 'css/dash_per_user.css' %}">
 
 <div class="col-md-12">
   <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
@@ -14,7 +14,9 @@
     <input type="text" id="searchInput" class="form-control" placeholder="Search sections or subsections..." onkeyup="filterContent()">
   </div>
 
-  <p><a href="{% url 'online_help:home_test' %}">← Back to Home</a></p>
+  <p>
+    <a href="{% url 'online_help:home_test' %}">← Back to Home</a>
+  </p>
 
   <div class="row">
     <div class="col-md-6 d-flex">
@@ -26,7 +28,9 @@
             {% for color, count in color_counts.items %}
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 <span><strong>{{ color|default:"No Color" }}:</strong></span>
-                <span class="badge badge-pill badge-primary">{{ count }} task{{ count|pluralize }}</span>
+                <a href="{% url 'online_help:tasks_by_color' writer.pk color %}" class="badge badge-pill badge-primary">
+                  {{ count }} task{{ count|pluralize }}
+                </a>
               </li>
             {% empty %}
               <li class="list-group-item">No tasks.</li>
@@ -65,17 +69,19 @@
               <tr>
                 <td style="border: 1px solid #444; padding: 8px;">{{ tk.subsection.section.name }}</td>
                 <td style="border: 1px solid #444; padding: 8px;">
-                  <a href="{% url 'online_help:view_subsection' tk.subsection.id %}" class="hover-link">
+                  <a href="{% url 'online_help:view_subsection' tk.subsection.id %}?writer={{ writer.pk }}" class="hover-link">
                     {{ tk.subsection.name }}
                   </a>
+
                 </td>
-                <td style="border: 1px solid #444; padding: 8px; background-color: {{ tk.color }};">
-                  {{ tk.color }}
+                <td style="border: 1px solid #444; padding: 8px; background-color: {{ tk.subsection.color }};">
+                  {{ tk.subsection.color }}
                 </td>
-                <td style="border: 1px solid #444; padding: 8px;">{{ tk.completion }}</td>
+                <td style="border: 1px solid #444; padding: 8px;">{{ tk.subsection.completion }}</td>
                 <td style="border: 1px solid #444; padding: 8px;">
-                  <a href="{% url 'online_help:view_subsection_edit' tk.subsection.id %}">Edit</a>
+                  <a href="{% url 'online_help:view_subsection_edit' tk.subsection.id %}?writer={{ writer.pk }}">Edit</a>
                 </td>
+
               </tr>
             {% endfor %}
           </tbody>
@@ -113,6 +119,7 @@
     }
   });
 </script>
+
 
 <script>
 function filterContent() {
