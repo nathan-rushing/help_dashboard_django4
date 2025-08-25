@@ -43,7 +43,7 @@
                         <tbody>
                             {% for task in tasks %}
                             <tr>
-                                <td style="background-color: {{ task.color }};">
+                                <td style="background-color: {{ task.subsection.color }};">
                                     {% if task.subsection.section %}
                                         <a href="{% url 'online_help:section_subsections' task.subsection.section.id %}" class="hover-link">
                                             {{ task.subsection.section.name }}
@@ -52,7 +52,7 @@
                                         No section
                                     {% endif %}
                                 </td>
-                                <td style="background-color: {{ task.color }};">
+                                <td style="background-color: {{ task.subsection.color }};">
                                     {% if task.subsection %}
                                         <a href="{% url 'online_help:subsection_details' task.subsection.id %}" class="hover-link">
                                             {{ task.subsection.name }}
@@ -61,15 +61,16 @@
                                         No subsection
                                     {% endif %}
                                 </td>
-                                <td style="background-color: {{ task.color }};">
-                                    {% if task.writer and task.writer.name %}
-                                        {{ task.writer.name }}
+                                <td style="background-color: {{ task.subsection.color }};">
+                                    {% if task.writers.all %}
+                                        {% for writer in task.writers.all %}
+                                            {{ writer.name }}{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
                                     {% else %}
                                         Unassigned
                                     {% endif %}
                                 </td>
-
-                                <td style="background-color: {{ task.color }};">{{ task.sme|default:"Not assigned" }}</td>
+                                <td style="background-color: {{ task.subsection.color }};">{{ task.sme|default:"Not assigned" }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

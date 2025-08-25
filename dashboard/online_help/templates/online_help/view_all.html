@@ -64,18 +64,21 @@
                 <td>{{ task.subsection.section.document.name }}</td>
                 <td>{{ task.subsection.section.name }}</td>
                 <td>
-                    <a href="{% url 'online_help:view_subsection' task.subsection.id %}?writer={{ task.writer.pk }}" class="hover-link">
+                    <a href="{% url 'online_help:view_subsection' task.subsection.id %}?task={{ task.id }}">
                         {{ task.subsection.name }}
                     </a>
                 </td>
                 <td>{{ task.subsection.completion }}</td>
                 <td>
-                    {% if task.writer %}
-                        {{ task.writer.name }}
+                {% with task.writers.all as assigned_writers %}
+                    {% if assigned_writers %}
+                    {{ assigned_writers|join:", " }}
                     {% else %}
-                        Unassigned
+                    Unassigned
                     {% endif %}
+                {% endwith %}
                 </td>
+
             </tr>
         {% empty %}
             <tr>

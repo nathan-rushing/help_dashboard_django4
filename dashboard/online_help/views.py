@@ -43,13 +43,16 @@ def verify_password(request):
         return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error', 'message': 'Invalid password'}, status=403)
 
+
 @login_required
 def home_test(request):
     writers = Writer.objects.annotate(
         sort_name=Coalesce('name', Value('zzz'))
     ).order_by('sort_name')
 
-    tasks = Task.objects.select_related('writer', 'subsection__section__document')
+    # tasks = Task.objects.select_related('writer', 'subsection__section__document') # select_related for one-to-many and one-to-one relationship
+    tasks = Task.objects.select_related('subsection__section__document', 'sme') \
+                        .prefetch_related('writers')
 
     writer_tasks_grouped = {}
     color_classes = [
@@ -63,7 +66,7 @@ def home_test(request):
 
         grouped_by_doc = defaultdict(list)
         for task in tasks:
-            if task.writer_id == writer.pk:
+            if writer in task.writers.all():   # ✅ FIX
                 document = task.subsection.section.document
                 grouped_by_doc[document].append(task)
         writer_tasks_grouped[writer.pk] = dict(grouped_by_doc)
@@ -84,14 +87,10 @@ def home_test(request):
 def dash_per_user(request, writer_pk):
     writer = get_object_or_404(Writer, pk=writer_pk)
 
-    tasks = (
-        Task.objects
-        .filter(writer=writer)
-        .select_related('subsection__section__document')
-        .order_by('subsection__section__document__name',
-                  'subsection__section__name',
-                  'subsection__name')
-    )
+    tasks = Task.objects.filter(writers=writer).select_related(
+        "subsection__section__document"
+    ).prefetch_related("writers")
+
 
     # Group tasks by Document name for the table
     grouped = defaultdict(list)
@@ -134,31 +133,41 @@ def dash_per_user(request, writer_pk):
 def tasks_by_color(request, writer_pk, color):
     writer = get_object_or_404(Writer, pk=writer_pk)
 
-    tasks = (
-        Task.objects
-        .filter(writer=writer)
-        .select_related('subsection__section__document')
+    # distinct subsections assigned to this writer with the given color
+
+    subsections = (
+        Subsection.objects.filter(
+            tasks__writers=writer,
+            color=color
+        )
+        .select_related("section__document")
+        .prefetch_related("tasks__writers", "tasks__sme")
+        .distinct()
     )
 
-    if color != "No Color":
-        tasks = tasks.filter(subsection__color=color)
-    else:
-        tasks = tasks.filter(subsection__color__isnull=True)
+    # attach the specific task for this writer to each subsection
+    for subsection in subsections:
+        subsection.writer_task = subsection.tasks.filter(writers=writer).first()
 
-    return render(request, 'online_help/tasks_by_color.html', {
-        'writer': writer,
-        'color': color,
-        'tasks': tasks,
+    return render(request, "online_help/tasks_by_color.html", {
+        "writer": writer,
+        "subsections": subsections,
+        "color": color,
     })
 
-@login_required
-def view_subsection(request, subsection_id):
-    subsection = get_object_or_404(Subsection, pk=subsection_id)
 
-    writer_id = request.GET.get("writer")
+# views.py
+def view_subsection(request, subsection_id):
+    subsection = get_object_or_404(Subsection, id=subsection_id)
+
+    # Check if a specific task is passed via query params (?task=ID)
+    task_id = request.GET.get("task")
     task = None
-    if writer_id:
-        task = get_object_or_404(Task, subsection=subsection, writer_id=writer_id)
+    if task_id:
+        task = Task.objects.filter(id=task_id, subsection=subsection).select_related("sme").prefetch_related("writers").first()
+    else:
+        # If no task_id, maybe show the *first* task for this subsection (if you want a default)
+        task = Task.objects.filter(subsection=subsection).select_related("sme").prefetch_related("writers").first()
 
     return render(request, "online_help/view_subsection.html", {
         "subsection": subsection,
@@ -166,45 +175,63 @@ def view_subsection(request, subsection_id):
     })
 
 
+
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+
+from .models import Subsection, Task, Writer
+from .forms import SubsectionEditForm
+
 @login_required
 def view_subsection_edit(request, subsection_id):
     subsection = get_object_or_404(Subsection, pk=subsection_id)
 
-    writer_id = request.GET.get("writer")
+    task_id = request.GET.get("task")
     task = None
-    if writer_id:
-        task = get_object_or_404(Task, subsection=subsection, writer_id=writer_id)
+    if task_id:
+        task = get_object_or_404(Task, pk=task_id, subsection=subsection)
 
     if request.method == "POST":
         subsection_form = SubsectionEditForm(request.POST, instance=subsection)
 
         if subsection_form.is_valid():
             subsection_form.save()
-
-            # ✅ Preserve writer param on redirect
-            if writer_id:
+            if task_id:  # ✅ Preserve task param
                 return redirect(
-                    f"{reverse('online_help:view_subsection', args=[subsection_id])}?writer={writer_id}"
+                    f"{reverse('online_help:view_subsection', args=[subsection_id])}?task={task_id}"
                 )
             return redirect("online_help:view_subsection", subsection_id=subsection_id)
     else:
         subsection_form = SubsectionEditForm(instance=subsection)
 
+
+    # when rendering the template
     return render(request, "online_help/view_subsection_edit.html", {
-        "subsection_form": subsection_form,
-        "task": task,
         "subsection": subsection,
-        "writer_id": writer_id,   # ✅ pass this
+        "task": task,
+        "task_id": task_id,   # ✅
+        "subsection_form": subsection_form,
     })
 
 
 
+from collections import defaultdict
+from django.db.models import Prefetch
+
 @login_required
 def tasks_test(request):
-    tasks = Task.objects.select_related("subsection__section__document", "writer").all()
+    tasks = Task.objects.select_related(
+        "subsection__section__document"
+    ).prefetch_related("writers").all()   # ✅ use prefetch_related
+
     grouped_tasks = defaultdict(list)
     for task in tasks:
-        document = task.subsection.section.document if task.subsection and task.subsection.section else None
+        document = (
+            task.subsection.section.document
+            if task.subsection and task.subsection.section
+            else None
+        )
         grouped_tasks[document].append(task)
 
     return render(request, "online_help/tasks_test.html", {"grouped_tasks": dict(grouped_tasks)})
@@ -363,33 +390,65 @@ def subsection_rename(request, subsection_id):
         {"section": section, "subsection": subsection, "form": form},
     )
 
+
+# views.py
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+from django.db.models import Prefetch
+from collections import defaultdict
+
+from .models import Subsection, Task, SME, Writer
+from .forms import WriterAssignForm
+
 @login_required
 def subsection_details(request, subsection_id):
     subsection = get_object_or_404(Subsection, id=subsection_id)
-    tasks = Task.objects.filter(subsection=subsection)
-    sme_list = SME.objects.filter(tasks__subsection=subsection)  # ✅ fixed here
 
-    # Handle writer add
+    # Prefetch writers for all tasks under this subsection
+    tasks = (
+        Task.objects.filter(subsection=subsection)
+        .prefetch_related("writers", "sme")
+    )
+
+    # Distinct lists for display
+    writers = Writer.objects.filter(tasks__subsection=subsection).distinct()
+    sme_list = SME.objects.filter(tasks__subsection=subsection).distinct()
+
+    # Add a writer to this subsection's task(s)
     if request.method == "POST" and "writer_form" in request.POST:
         form = WriterAssignForm(request.POST)
         if form.is_valid():
-            writer = form.cleaned_data['writer']
-            Task.objects.create(subsection=subsection, writer=writer)
+            writer = form.cleaned_data["writer"]
+
+            # Prefer a single task per subsection. If none exists, create one.
+            task, _ = Task.objects.get_or_create(subsection=subsection)
+            task.writers.add(writer)
+
             return redirect("online_help:subsection_details", subsection_id=subsection.id)
     else:
         form = WriterAssignForm()
 
-    remove_task_id = request.GET.get("remove_task")
-    if remove_task_id:
-        Task.objects.filter(id=remove_task_id, subsection=subsection).delete()
+    # Remove a writer (detach from all tasks in this subsection)
+    remove_writer_id = request.GET.get("remove_writer")
+    if remove_writer_id:
+        # Efficiently delete the M2M rows via the through table
+        Task.writers.through.objects.filter(
+            task__subsection=subsection, writer_id=remove_writer_id
+        ).delete()
         return redirect("online_help:subsection_details", subsection_id=subsection.id)
 
-    return render(request, "online_help/subsection_details.html", {
-        "subsection": subsection,
-        "tasks": tasks,
-        "sme_list": sme_list,
-        "form": form,
-    })
+    return render(
+        request,
+        "online_help/subsection_details.html",
+        {
+            "subsection": subsection,
+            "tasks": tasks,        # keep if you want to inspect tasks/SMEs
+            "writers": writers,    # <-- use this for display
+            "sme_list": sme_list,
+            "form": form,
+        },
+    )
+
 
 @require_POST
 @login_required
@@ -444,45 +503,36 @@ def add_sme(request, subsection_id):
 def assign_task(request):
     if request.method == 'POST':
         form = AssignTaskForm(request.POST)
-
         if form.is_valid():
             document = form.cleaned_data['document']
             section = form.cleaned_data['section']
             sub_section = form.cleaned_data['sub_section']
-            writer = form.cleaned_data['writer']
-            # sme = form.cleaned_data['sme']
+            selected_writers = form.cleaned_data['writers']  # multiple
 
-            # Find task(s) for the given subsection
-            task = Task.objects.filter(subsection=sub_section).first()
+            # One task per subsection; create if missing
+            task, _ = Task.objects.get_or_create(subsection=sub_section)
 
-            if not task:
-                form.add_error(None, "Task not found for the selected subsection.")
-            else:
-                # Assign writer and SME to the task
-                task.writer = writer
-                # task.sme = sme
-                task.save()
+            # ✅ APPEND instead of REPLACE
+            task.writers.add(*selected_writers)
 
-                return redirect('online_help:tasks_test')  # Redirect after success
-
-        else:
-            print("Form is invalid:", form.errors)
-
+            return redirect('online_help:tasks_test')
     else:
         form = AssignTaskForm()
 
     return render(request, 'online_help/assign_task.html', {'form': form})
 
+
 # For assign_task AJAX functionality
-@login_required
-def load_sections(request):
-    document_id = request.GET.get('document')
+from django.http import JsonResponse
+from .models import Section, Subsection
+
+def ajax_load_sections(request):
+    document_id = request.GET.get("document")
     sections = Section.objects.filter(document_id=document_id).values("id", "name")
     return JsonResponse(list(sections), safe=False)
 
-@login_required
-def load_subsections(request):
-    section_id = request.GET.get('section')
+def ajax_load_subsections(request):
+    section_id = request.GET.get("section")
     subsections = Subsection.objects.filter(section_id=section_id).values("id", "name")
     return JsonResponse(list(subsections), safe=False)
 
@@ -513,10 +563,8 @@ def view_all(request):
     color_filter = request.GET.get('color')
     writer_filter = request.GET.get('writer')
 
-    # ✅ Initialize tasks first
-    tasks = Task.objects.select_related(
-        'writer', 'sme', 'subsection__section__document'
-    ).all()
+    tasks = Task.objects.select_related('subsection__section__document', 'sme') \
+                        .prefetch_related('writers')
 
     # ✅ Apply filters safely
     if document_filter:
@@ -526,9 +574,10 @@ def view_all(request):
         tasks = tasks.filter(subsection__color=color_filter)
 
     if writer_filter == "unassigned":
-        tasks = tasks.filter(writer__isnull=True)
+        tasks = tasks.filter(writers__isnull=True)
     elif writer_filter:
-        tasks = tasks.filter(writer__id=writer_filter)
+        tasks = tasks.filter(writers__id=writer_filter)
+
 
     # ✅ Prepare dropdown data
     documents = Document.objects.all()

@@ -38,21 +38,17 @@
 
                 <div class="form-group">
                     {{ form.section.label_tag }}
-                    <select name="section" id="id_section" class="form-control form-control-lg">
-                        <option value="">Select section</option>
-                    </select>
+                    {{ form.section|add_class:"form-control form-control-lg" }}
                 </div>
 
                 <div class="form-group">
                     {{ form.sub_section.label_tag }}
-                    <select name="sub_section" id="id_sub_section" class="form-control form-control-lg">
-                        <option value="">Select subsection</option>
-                    </select>
+                    {{ form.sub_section|add_class:"form-control form-control-lg" }}
                 </div>
 
                 <div class="form-group">
-                    {{ form.writer.label_tag }}
-                    {{ form.writer|add_class:"form-control form-control-lg" }}
+                    {{ form.writers.label_tag }}
+                    {{ form.writers }}
                 </div>
 
                 <div class="form-group">
@@ -68,33 +64,50 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$("#id_document").change(function () {
-    const document_id = $(this).val();
-    $.ajax({
-        url: "{% url 'online_help:ajax_load_sections' %}",
-        data: { 'document': document_id },
-        success: function (data) {
-            $("#id_section").html('<option value="">Select section</option>');
-            data.forEach(function (section) {
-                $("#id_section").append(`<option value="${section.id}">${section.name}</option>`);
-            });
-            $("#id_sub_section").html('<option value="">Select subsection</option>');
-        }
+$(function() {
+    $("#id_document").change(function () {
+        const document_id = $(this).val();
+        $.ajax({
+            url: "{% url 'online_help:ajax_load_sections' %}",
+            data: { 'document': document_id },
+            dataType: 'json',
+            success: function (data) {
+                let sectionSelect = $("#id_section");
+                sectionSelect.html('<option value="">Select section</option>');
+                data.forEach(function (section) {
+                    sectionSelect.append(
+                        $("<option>").val(section.id).text(section.name)
+                    );
+                });
+                $("#id_sub_section").html('<option value="">Select subsection</option>');
+            },
+            error: function() {
+                alert("Error loading sections. Please try again.");
+            }
+        });
     });
-});
 
-$("#id_section").change(function () {
-    const section_id = $(this).val();
-    $.ajax({
-        url: "{% url 'online_help:ajax_load_subsections' %}",
-        data: { 'section': section_id },
-        success: function (data) {
-            $("#id_sub_section").html('<option value="">Select subsection</option>');
-            data.forEach(function (sub) {
-                $("#id_sub_section").append(`<option value="${sub.id}">${sub.name}</option>`);
-            });
-        }
+    $("#id_section").change(function () {
+        const section_id = $(this).val();
+        $.ajax({
+            url: "{% url 'online_help:ajax_load_subsections' %}",
+            data: { 'section': section_id },
+            dataType: 'json',
+            success: function (data) {
+                let subSelect = $("#id_sub_section");
+                subSelect.html('<option value="">Select subsection</option>');
+                data.forEach(function (sub) {
+                    subSelect.append(
+                        $("<option>").val(sub.id).text(sub.name)
+                    );
+                });
+            },
+            error: function() {
+                alert("Error loading subsections. Please try again.");
+            }
+        });
     });
 });
 </script>
+
 {% endblock %}

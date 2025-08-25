@@ -39,8 +39,8 @@ urlpatterns = [
     path("assign_task/", views.assign_task, name="assign_task"),
 
     # AJAX endpoints for assign_task in tasks_test
-    path('ajax/load-sections/', views.load_sections, name='ajax_load_sections'),
-    path('ajax/load-subsections/', views.load_subsections, name='ajax_load_subsections'),    
+    path('ajax/load-sections/', views.ajax_load_sections, name='ajax_load_sections'),
+    path('ajax/load-subsections/', views.ajax_load_subsections, name='ajax_load_subsections'),    
 
     # All tasks
     path("view_all/", views.view_all, name="view_all"),

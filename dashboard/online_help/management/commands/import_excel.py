@@ -25,7 +25,11 @@ class Command(BaseCommand):
             writer_name = str(row.get("Writer")).strip()
             comments = row.get("Comments")
 
-            sme_name = str(row.get("Subject Matter Expert/Engineering")).strip() if pd.notna(row.get("Subject Matter Expert/Engineering")) else None
+            sme_name = (
+                str(row.get("Subject Matter Expert/Engineering")).strip()
+                if pd.notna(row.get("Subject Matter Expert/Engineering"))
+                else None
+            )
             sme = None
             if sme_name:
                 sme, _ = SME.objects.get_or_create(name=sme_name)
@@ -36,29 +40,35 @@ class Command(BaseCommand):
             if not doc_name or not sec_name or not sub_name:
                 continue
 
+            # --- Create or update hierarchy ---
             document, _ = Document.objects.get_or_create(name=doc_name)
             section, _ = Section.objects.get_or_create(document=document, name=sec_name)
             subsection, _ = Subsection.objects.get_or_create(section=section, name=sub_name)
 
-            # ✅ Update subsection-level fields (shared across tasks)
+            # ✅ Update subsection-level fields
             subsection.color = color
             subsection.completion = completion
             subsection.comments = comments if pd.notna(comments) else subsection.comments
             subsection.save()
 
+            # --- Writers ---
             writer = None
             if writer_name and writer_name.lower() != "no writer":
                 writer, _ = Writer.objects.get_or_create(name=writer_name)
 
+            # --- Task ---
             task, created = Task.objects.get_or_create(
                 subsection=subsection,
-                writer=writer,
                 sme=sme,
             )
 
-            # ✅ Update existing tasks with new info
-            if not created:
-                task.sme = sme or task.sme
+            # ✅ Add writer(s) to ManyToMany
+            if writer:
+                task.writers.add(writer)
+
+            # ✅ Update SME if missing
+            if sme and not task.sme:
+                task.sme = sme
                 task.save()
 
             if created:

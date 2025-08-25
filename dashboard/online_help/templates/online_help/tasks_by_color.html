@@ -16,7 +16,7 @@
   
   <p><a href="{% url 'online_help:dash_per_user' writer.pk %}">← Back to {{ writer.name }}'s dashboard</a></p>
 
-  {% if tasks %}
+  {% if subsections %}
     <table class="table table-bordered">
       <thead>
         <tr>
@@ -28,25 +28,32 @@
         </tr>
       </thead>
       <tbody>
-        {% for task in tasks %}
+        {% for subsection in subsections %}
           <tr>
-            <td>{{ task.subsection.section.document.name }}</td>
-            <td>{{ task.subsection.section.name }}</td>
+            <td>{{ subsection.section.document.name }}</td>
+            <td>{{ subsection.section.name }}</td>
             <td>
-              <a href="{% url 'online_help:view_subsection' task.subsection.id %}?writer={{ writer.pk }}">
-                {{ task.subsection.name }}
+              <a href="{% url 'online_help:view_subsection' subsection.id %}?writer={{ writer.pk }}">
+                {{ subsection.name }}
               </a>
             </td>
             <td>
-                {% if task.subsection.comments %}
-                    {{ task.subsection.comments|linebreaksbr }}
-                {% else %}
-                    N/A
-                {% endif %}
+              {% if subsection.comments %}
+                {{ subsection.comments|linebreaksbr }}
+              {% else %}
+                N/A
+              {% endif %}
             </td>
             <td>
-              <a href="{% url 'online_help:view_subsection_edit' task.subsection.id %}?writer={{ writer.pk }}">Edit</a>
+              {% if subsection.writer_task %}
+                <a href="{% url 'online_help:view_subsection_edit' subsection.id %}?writer={{ writer.pk }}&task={{ subsection.writer_task.id }}">
+                  Edit
+                </a>
+              {% else %}
+                No task
+              {% endif %}
             </td>
+
           </tr>
         {% endfor %}
       </tbody>
@@ -54,6 +61,7 @@
   {% else %}
     <p>No tasks for this color.</p>
   {% endif %}
+
 </div>
 
 <script>

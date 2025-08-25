@@ -10,7 +10,7 @@ from django import forms
 from .models import Writer, Task
 
 from django import forms
-from .models import Document, Section, Subsection, Writer, SME
+from .models import Document, Section, Subsection, Writer
 
 from django import forms
 from .models import Task
@@ -37,36 +37,37 @@ class SubsectionForm(forms.ModelForm):
 class TaskForm(forms.Form):
     writer = forms.ModelChoiceField(queryset=Writer.objects.all(), required=True)
 
-class WriterAssignForm(forms.ModelForm):
-    class Meta:
-        model = Task
-        fields = ['writer']
+# forms.py
+from django import forms
+from .models import Writer
 
-    writer = forms.ModelChoiceField(
-        queryset=Writer.objects.all(),
-        required=False,   # ✅ allow blank
-        empty_label="No Writer Assigned",  # ✅ dropdown option for blank
-        label="Select Writer"
-    )
+class WriterAssignForm(forms.Form):
+    writer = forms.ModelChoiceField(queryset=Writer.objects.all(), required=True)
 
 
 class AssignTaskForm(forms.Form):
     document = forms.ModelChoiceField(queryset=Document.objects.all(), required=True)
     section = forms.ModelChoiceField(queryset=Section.objects.none(), required=True)
     sub_section = forms.ModelChoiceField(queryset=Subsection.objects.none(), required=True)
-    writer = forms.ModelChoiceField(queryset=Writer.objects.all(), required=True)
-    # sme = forms.ModelChoiceField(queryset=SME.objects.all(), required=False)
+    writers = forms.ModelMultipleChoiceField(
+        queryset=Writer.objects.all(),
+        required=True,
+        widget=forms.CheckboxSelectMultiple
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # dynamically load section/subsection if data already present
+        # Case 1: bound form (POST)
         if 'document' in self.data:
             try:
                 document_id = int(self.data.get('document'))
                 self.fields['section'].queryset = Section.objects.filter(document_id=document_id)
             except (ValueError, TypeError):
                 pass
+        # Case 2: initial data (GET or re-render after error)
+        elif self.initial.get("document"):
+            self.fields['section'].queryset = Section.objects.filter(document=self.initial["document"])
 
         if 'section' in self.data:
             try:
@@ -74,6 +75,8 @@ class AssignTaskForm(forms.Form):
                 self.fields['sub_section'].queryset = Subsection.objects.filter(section_id=section_id)
             except (ValueError, TypeError):
                 pass
+        elif self.initial.get("section"):
+            self.fields['sub_section'].queryset = Subsection.objects.filter(section=self.initial["section"])
 
 class SubsectionEditForm(forms.ModelForm):
     class Meta:

@@ -11,24 +11,42 @@
     <div class="card shadow-sm">
         <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
             <h2 class="mb-0">{{ subsection.name }}</h2>
-            <a href="{% url 'online_help:view_subsection_edit' subsection.id %}?writer={{ task.writer.id }}" class="btn btn-outline-dark btn-sm hover-link">
-                Edit
-            </a>
-
+            {% if task %}
+                <a href="{% url 'online_help:view_subsection_edit' subsection.id %}?task={{ task.id }}" 
+                   class="btn btn-outline-dark btn-sm hover-link">
+                    Edit
+                </a>
+            {% else %}
+                <span class="text-muted">(No task selected)</span>
+            {% endif %}
         </div>
+
         <div class="card-body">
             <div class="mb-3">
                 <h5 class="text-muted">Writer</h5>
-                <p class="font-weight-bold">{{ task.writer.name }}</p>
+                <p class="font-weight-bold">
+                    {% if task %}
+                        {% for writer in task.writers.all %}
+                            {{ writer.name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            Unassigned
+                        {% endfor %}
+                    {% else %}
+                        Unassigned
+                    {% endif %}
+                </p>
             </div>
+
             <div class="mb-3">
                 <h5 class="text-muted">Section</h5>
                 <p class="font-weight-bold">{{ subsection.section.name }}</p>
             </div>
+
             <div class="mb-3">
                 <h5 class="text-muted">Color</h5>
                 <p class="font-weight-bold">{{ subsection.color }}</p>
             </div>
+
             <div class="mb-3">
                 <h5 class="text-muted">Comments</h5>
                 {% if subsection.comments %}
@@ -37,6 +55,7 @@
                     <p class="font-weight-bold">N/A</p>
                 {% endif %}
             </div>
+
             <div class="mb-3">
                 <h5 class="text-muted">SME</h5>
                 <p class="font-weight-bold">
@@ -46,8 +65,8 @@
                         Unassigned
                     {% endif %}
                 </p>
-
             </div>
+
             <div class="mb-3">
                 <h5 class="text-muted">Completion</h5>
                 <p class="font-weight-bold">{{ subsection.completion }}</p>
@@ -55,5 +74,6 @@
         </div>
     </div>
 </div>
+
 
 {% endblock %}

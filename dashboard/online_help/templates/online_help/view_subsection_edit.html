@@ -7,13 +7,13 @@
 
 <div class="container mt-5">
     <p>
-    <a href="{% url 'online_help:view_subsection' subsection.id %}{% if writer_id %}?writer={{ writer_id }}{% endif %}">
-        ← Back to Details
-    </a>
+        <a href="{% url 'online_help:view_subsection' subsection.id %}{% if task_id %}?task={{ task_id }}{% endif %}">
+            ← Back to Details
+        </a>
     </p>
     <div class="card shadow-sm">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h2 class="mb-0">Edit Subsection - {{ task.subsection.name }}</h2>
+            <h2 class="mb-0">Edit Subsection - {{ subsection.name }}</h2>
         </div>
         <div class="card-body">
 
@@ -22,21 +22,31 @@
             <div class="mb-3">
                 <h5 class="text-muted">Writer</h5>
                 <p class="font-weight-bold">
-                    {% if task.writer %}{{ task.writer.name }}{% else %}Unassigned{% endif %}
+                    {% for writer in task.writers.all %}
+                        {{ writer.name }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        Unassigned
+                    {% endfor %}
                 </p>
             </div>
+
 
             <!-- Section -->
             <div class="mb-3">
                 <h5 class="text-muted">Section</h5>
-                <p class="font-weight-bold">{{ task.subsection.section.name }}</p>
+                <p class="font-weight-bold">{{ subsection.section.name }}</p>
             </div>
+
 
             <!-- SME -->
             <div class="mb-3">
                 <h5 class="text-muted">SME</h5>
                 <p class="font-weight-bold">
-                    {% if task.sme %}{{ task.sme.name }}{% else %}Unassigned{% endif %}
+                    {% if task and task.sme %}
+                        {{ task.sme.name }}
+                    {% else %}
+                        Unassigned
+                    {% endif %}
                 </p>
             </div>
 
@@ -59,10 +69,12 @@
                 </div>
 
                 <button type="submit" class="btn btn-success">Save Changes</button>
-                <a href="{% url 'online_help:view_subsection' subsection.id %}{% if writer_id %}?writer={{ writer_id }}{% endif %}" 
+                <a href="{% url 'online_help:view_subsection' subsection.id %}{% if task_id %}?task={{ task_id }}{% endif %}" 
                 class="btn btn-secondary">
                     Cancel
                 </a>
+
+
             </form>
         </div>
     </div>

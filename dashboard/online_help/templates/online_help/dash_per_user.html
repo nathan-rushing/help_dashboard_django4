@@ -79,7 +79,10 @@
                 </td>
                 <td style="border: 1px solid #444; padding: 8px;">{{ tk.subsection.completion }}</td>
                 <td style="border: 1px solid #444; padding: 8px;">
-                  <a href="{% url 'online_help:view_subsection_edit' tk.subsection.id %}?writer={{ writer.pk }}">Edit</a>
+                  <a href="{% url 'online_help:view_subsection_edit' tk.subsection.id %}?task={{ tk.id }}">
+                      Edit
+                  </a>
+
                 </td>
 
               </tr>

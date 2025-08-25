@@ -48,11 +48,12 @@ class SME(models.Model):
 
 class Task(models.Model):
     subsection = models.ForeignKey(Subsection, on_delete=models.CASCADE, related_name="tasks")
-    writer = models.ForeignKey(Writer, on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
+    writers = models.ManyToManyField(Writer, blank=True, related_name="tasks")  # ✅ Changed here
     sme = models.ForeignKey("SME", on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
 
     def __str__(self):
-        return f"Task: {self.subsection.name} ({self.writer.name if self.writer else 'Unassigned'})"
+        writers_list = ", ".join([writer.name for writer in self.writers.all()])
+        return f"Task: {self.subsection.name} ({writers_list if writers_list else 'Unassigned'})"
 
 class Version(models.Model):
     number = models.CharField(max_length=20)
