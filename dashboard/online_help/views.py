@@ -611,7 +611,10 @@ def export_excel(request):
         cell.font = Font(bold=True)
 
     # Populate rows
-    for document in Document.objects.prefetch_related("sections__subsections__tasks"):
+    for document in Document.objects.prefetch_related(
+        "sections__subsections__tasks__writers",
+        "sections__subsections__tasks__sme",
+    ):
         for section in document.sections.all():
             for subsection in section.subsections.all():
                 for task in subsection.tasks.all():
@@ -621,7 +624,7 @@ def export_excel(request):
                         subsection.name,
                         subsection.color,
                         subsection.completion,
-                        task.writer.name if task.writer else "",
+                        ", ".join([writer.name for writer in task.writers.all()]) or "",
                         task.sme.name if task.sme else "",
                         subsection.comments or ""
                     ])
